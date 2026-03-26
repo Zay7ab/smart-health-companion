@@ -1,7 +1,7 @@
 import streamlit as st
 import numpy as np
 from PIL import Image
-import tensorflow as tf
+import tf_keras as keras
 import gdown
 import os
 
@@ -15,7 +15,7 @@ def load_model():
         with st.spinner("Downloading X-Ray model..."):
             url = 'https://drive.google.com/uc?id=1F92CBY1bxbc4Mw63kYsj_Y0xB2sH0yz5'
             gdown.download(url, model_path, quiet=False)
-    model = tf.keras.models.load_model(model_path)
+    model = keras.models.load_model(model_path)
     return model
 
 uploaded_file = st.file_uploader("Choose an X-ray image", type=["jpg", "jpeg", "png"])
@@ -28,7 +28,6 @@ if uploaded_file is not None:
         with st.spinner("Analyzing..."):
             try:
                 model = load_model()
-
                 img = image.convert('RGB')
                 img = img.resize((150, 150))
                 img_array = np.array(img) / 255.0
