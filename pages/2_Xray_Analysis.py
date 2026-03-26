@@ -1,21 +1,15 @@
-# Mount drive first
-from google.colab import drive
-drive.mount('/content/drive')
+import streamlit as st
+from PIL import Image
+import numpy as np
 
-# Install converter
-!pip install tf2onnx onnx
+st.title("🫁 X-Ray Analysis")
+st.write("Upload a chest X-ray image to detect Pneumonia.")
 
-import tf2onnx
-import tensorflow as tf
-import onnx
+st.warning("⚠️ X-Ray analysis model is loading. Please use Heart Disease Prediction and Chatbot for now.")
 
-# Load your saved model
-model = tf.keras.models.load_model('/content/drive/MyDrive/xray_cnn_model.h5')
+uploaded_file = st.file_uploader("Choose an X-ray image", type=["jpg", "jpeg", "png"])
 
-# Convert to ONNX
-input_signature = [tf.TensorSpec([None, 150, 150, 3], tf.float32)]
-onnx_model, _ = tf2onnx.convert.from_keras(model, input_signature=input_signature)
-
-# Save ONNX model back to Drive
-onnx.save(onnx_model, '/content/drive/MyDrive/xray_model.onnx')
-print("Done! Check your Google Drive for xray_model.onnx")
+if uploaded_file is not None:
+    image = Image.open(uploaded_file)
+    st.image(image, caption="Uploaded X-Ray", use_column_width=True)
+    st.info("🔄 Model deployment in progress. Check back soon!")
