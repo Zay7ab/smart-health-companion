@@ -3,7 +3,7 @@ joblib
 numpy
 pandas
 scikit-learn
-tensorflow==2.15.0
 Pillow
 groq
 gdown
+tf-keras
