@@ -3,7 +3,8 @@ joblib
 numpy
 pandas
 scikit-learn
-tensorflow
+tensorflow-cpu
 Pillow
 groq
 gdown
+protobuf==3.20.3
