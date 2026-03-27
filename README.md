@@ -140,7 +140,7 @@ This application is built for **educational purposes only** as part of a Final Y
 
 ## 👨‍💻 Author
 
-**Muhammad Saad Ansari**
+**Muhammad Zayab Ansari**
 - Final Year Project — AI & Machine Learning
 - Built with ❤️ using Python & Streamlit
 
