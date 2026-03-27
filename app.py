@@ -12,11 +12,11 @@ st.markdown("""
 
 * { font-family: 'Inter', sans-serif; }
 
-[data-testid="stSidebarNav"] {
+[data-testid="stSidebarCollapsedControl"] {
     display: none !important;
 }
 
-[data-testid="stSidebarCollapsedControl"] {
+[data-testid="stSidebarNav"] {
     display: none !important;
 }
 
@@ -29,6 +29,24 @@ st.markdown("""
 
 [data-testid="stSidebar"] * {
     color: #1a3a1a !important;
+}
+
+[data-testid="stSidebarNavLink"] {
+    border-radius: 8px !important;
+    font-size: 13px !important;
+    padding: 7px 10px !important;
+    color: #5a6b5a !important;
+}
+
+[data-testid="stSidebarNavLink"]:hover {
+    background: #f5f9f0 !important;
+    color: #3b6d11 !important;
+}
+
+[data-testid="stSidebarNavLink"][aria-current="page"] {
+    background: linear-gradient(135deg,#eaf3de,#d4edbe) !important;
+    color: #27500a !important;
+    font-weight: 600 !important;
 }
 
 .stApp {
@@ -193,15 +211,15 @@ st.markdown("""
 }
 
 .sidebar-logo {
-    padding: 0 0 1rem 0;
+    padding: 0.5rem 0 1rem 0;
     border-bottom: 1px solid #e0ece0;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
 }
 
 .sidebar-brand {
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 700;
-    color: #1a3a1a;
+    color: #1a3a1a !important;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -220,7 +238,8 @@ st.markdown("""
     color: #639922 !important;
     letter-spacing: 1px;
     text-transform: uppercase;
-    margin-top: 2px;
+    margin-top: 3px;
+    padding-left: 18px;
 }
 
 .sidebar-section {
@@ -229,31 +248,13 @@ st.markdown("""
     letter-spacing: 1px;
     text-transform: uppercase;
     font-weight: 600;
-    padding: 12px 0 6px 0;
-}
-
-.sidebar-link {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 7px 10px;
-    border-radius: 8px;
-    margin-bottom: 2px;
-    font-size: 13px;
-    color: #5a6b5a !important;
-    text-decoration: none !important;
-    transition: all 0.15s;
-}
-
-.sidebar-link:hover {
-    background: #f5f9f0;
-    color: #3b6d11 !important;
+    padding: 12px 10px 4px 10px;
 }
 
 .sidebar-divider {
     border: none;
     border-top: 1px solid #e0ece0;
-    margin: 4px 0;
+    margin: 6px 0;
 }
 </style>
 
@@ -330,6 +331,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+# Custom sidebar branding
 st.sidebar.markdown("""
 <div class="sidebar-logo">
     <div class="sidebar-brand">
@@ -338,21 +340,23 @@ st.sidebar.markdown("""
     </div>
     <div class="sidebar-brand-sub">Smart Companion · 2026</div>
 </div>
-
-<div class="sidebar-section">⚕ Diagnostics</div>
-<a class="sidebar-link" href="/Heart_Disease">🫀 Heart Disease</a>
-<a class="sidebar-link" href="/Xray_Analysis">🫁 X-Ray Analysis</a>
-<a class="sidebar-link" href="/Symptom_Checker">🔍 Symptom Checker</a>
-
-<hr class="sidebar-divider"/>
-<div class="sidebar-section">🔧 Tools</div>
-<a class="sidebar-link" href="/Health_Chatbot">🤖 AI Chatbot</a>
-<a class="sidebar-link" href="/BMI_Calculator">⚖️ BMI Calculator</a>
-<a class="sidebar-link" href="/Risk_Gauge">📊 Risk Gauge</a>
-
-<hr class="sidebar-divider"/>
-<div class="sidebar-section">📁 Records</div>
-<a class="sidebar-link" href="/Health_Tips">💡 Health Tips</a>
-<a class="sidebar-link" href="/Medical_History">📋 Medical History</a>
-<a class="sidebar-link" href="/Patient_Report">📄 Patient Report</a>
 """, unsafe_allow_html=True)
+
+# Diagnostics section
+st.sidebar.markdown('<div class="sidebar-section">⚕ Diagnostics</div>', unsafe_allow_html=True)
+st.sidebar.page_link("App.py", label="🏠 Home")
+st.sidebar.page_link("pages/1_Heart_Disease.py", label="🫀 Heart Disease")
+st.sidebar.page_link("pages/2_Xray_Analysis.py", label="🫁 X-Ray Analysis")
+st.sidebar.page_link("pages/7_Symptom_Checker.py", label="🔍 Symptom Checker")
+
+# Tools section
+st.sidebar.markdown('<hr class="sidebar-divider"/><div class="sidebar-section">🔧 Tools</div>', unsafe_allow_html=True)
+st.sidebar.page_link("pages/3_Health_Chatbot.py", label="🤖 AI Chatbot")
+st.sidebar.page_link("pages/4_BMI_Calculator.py", label="⚖️ BMI Calculator")
+st.sidebar.page_link("pages/6_Risk_Gauge.py", label="📊 Risk Gauge")
+
+# Records section
+st.sidebar.markdown('<hr class="sidebar-divider"/><div class="sidebar-section">📁 Records</div>', unsafe_allow_html=True)
+st.sidebar.page_link("pages/5_Health_Tips.py", label="💡 Health Tips")
+st.sidebar.page_link("pages/8_Medical_History.py", label="📋 Medical History")
+st.sidebar.page_link("pages/9_Patient_Report.py", label="📄 Patient Report")
