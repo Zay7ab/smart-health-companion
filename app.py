@@ -12,8 +12,14 @@ st.markdown("""
 
 * { font-family: 'Inter', sans-serif; }
 
-.stApp {
-    background: #f0f4f0;
+[data-testid="stSidebarCollapsedControl"] {
+    display: none !important;
+}
+
+[data-testid="stSidebar"] {
+    min-width: 220px !important;
+    max-width: 220px !important;
+    transform: none !important;
 }
 
 [data-testid="stSidebar"] {
