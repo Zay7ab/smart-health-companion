@@ -20,9 +20,6 @@ st.markdown("""
     min-width: 220px !important;
     max-width: 220px !important;
     transform: none !important;
-}
-
-[data-testid="stSidebar"] {
     background: #ffffff !important;
     border-right: 1px solid #e0ece0 !important;
 }
@@ -50,6 +47,10 @@ st.markdown("""
     font-weight: 600 !important;
 }
 
+.stApp {
+    background: #f0f4f0 !important;
+}
+
 .hero {
     background: linear-gradient(135deg, #1a3a1a 0%, #2d5a1a 50%, #3b6d11 100%);
     border-radius: 20px;
@@ -57,17 +58,6 @@ st.markdown("""
     margin-bottom: 1.5rem;
     position: relative;
     overflow: hidden;
-}
-
-.hero::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -10%;
-    width: 400px;
-    height: 400px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.03);
 }
 
 .hero-badge {
@@ -95,9 +85,7 @@ st.markdown("""
     margin-bottom: 1rem;
 }
 
-.hero h1 span {
-    color: #97c459;
-}
+.hero h1 span { color: #97c459; }
 
 .hero p {
     font-size: 1rem;
@@ -166,7 +154,6 @@ st.markdown("""
     border-radius: 16px;
     padding: 1.5rem;
     transition: all 0.2s;
-    cursor: pointer;
 }
 
 .feature-card:hover {
@@ -217,11 +204,23 @@ st.markdown("""
     border: 1px solid #f0c040;
     border-radius: 12px;
     padding: 1rem 1.25rem;
-    display: flex;
-    align-items: center;
-    gap: 10px;
     font-size: 12px;
     color: #7a6000;
+}
+
+.sidebar-section {
+    font-size: 10px;
+    color: #97c459 !important;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-weight: 600;
+    padding: 12px 0 4px 0;
+}
+
+.sidebar-divider {
+    border: none;
+    border-top: 1px solid #e0ece0;
+    margin: 6px 0;
 }
 </style>
 
@@ -296,4 +295,12 @@ st.markdown("""
 <div class="disclaimer">
     ⚠️ This system is for educational purposes only. Always consult a qualified medical professional for proper diagnosis and treatment.
 </div>
+""", unsafe_allow_html=True)
+
+st.sidebar.markdown("""
+<div class="sidebar-section">⚕ Diagnostics</div>
+<hr class="sidebar-divider"/>
+<div class="sidebar-section">🔧 Tools</div>
+<hr class="sidebar-divider"/>
+<div class="sidebar-section">📁 Records</div>
 """, unsafe_allow_html=True)
