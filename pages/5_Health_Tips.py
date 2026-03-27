@@ -1,99 +1,159 @@
 import streamlit as st
-import random
+from groq import Groq
 
 st.set_page_config(page_title="Health Tips", page_icon="💡", layout="wide")
 
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap');
-    .stApp { background: linear-gradient(135deg, #0a0a1a 0%, #0d1b2a 40%, #1a0a2e 100%); font-family: 'Rajdhani', sans-serif; }
-    .page-title { font-family: 'Orbitron', monospace; font-size: 2.5rem; font-weight: 900; background: linear-gradient(90deg, #00d4ff, #7b2ff7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; animation: glow 3s ease-in-out infinite alternate; }
-    @keyframes glow { from { filter: drop-shadow(0 0 10px #00d4ff); } to { filter: drop-shadow(0 0 30px #7b2ff7); } }
-    .tip-card { background: rgba(255,255,255,0.05); backdrop-filter: blur(20px); border: 1px solid rgba(0,212,255,0.2); border-radius: 20px; padding: 1.5rem; margin: 0.8rem 0; transition: all 0.3s ease; animation: slideUp 0.5s ease-out; }
-    .tip-card:hover { border-color: rgba(123,47,247,0.6); box-shadow: 0 8px 30px rgba(123,47,247,0.3); transform: translateY(-3px); }
-    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    .tip-category { font-family: 'Orbitron', monospace; font-size: 0.7rem; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 0.5rem; }
-    .tip-text { color: rgba(255,255,255,0.85); font-size: 1.05rem; line-height: 1.6; }
-    .stButton > button { background: linear-gradient(90deg, #00d4ff, #7b2ff7) !important; color: white !important; border: none !important; border-radius: 12px !important; padding: 0.8rem 3rem !important; font-family: 'Orbitron', monospace !important; font-weight: 700 !important; width: 100% !important; }
-    .stSelectbox label { color: #00d4ff !important; }
-    [data-testid="stSidebar"] { background: rgba(10,10,26,0.95) !important; border-right: 1px solid rgba(0,212,255,0.2) !important; }
-    [data-testid="stSidebar"] * { color: white !important; }
-    p, label { color: rgba(255,255,255,0.8) !important; }
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+* { font-family: 'Inter', sans-serif; }
+.stApp { background: #f0f4f0 !important; }
+[data-testid="stSidebar"] { background: #ffffff !important; border-right: 1px solid #e0ece0 !important; }
+[data-testid="stSidebar"] * { color: #1a3a1a !important; }
+[data-testid="stSidebarNav"] a[aria-current="page"] { background: linear-gradient(135deg,#eaf3de,#d4edbe) !important; color: #27500a !important; font-weight: 600 !important; }
+.topbar { background: white; border: 1px solid #e0ece0; border-radius: 16px; padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between; }
+.topbar-title { font-size: 20px; font-weight: 700; color: #1a3a1a; }
+.topbar-sub { font-size: 12px; color: #639922; margin-top: 2px; }
+.ai-badge { display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg,#eaf3de,#d4edbe); border: 1px solid #97c459; border-radius: 20px; padding: 5px 12px; font-size: 11px; color: #27500a; font-weight: 600; }
+.ai-dot { width: 6px; height: 6px; border-radius: 50%; background: #639922; display: inline-block; }
+.category-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 1.25rem; }
+.category-card { background: white; border: 1px solid #e0ece0; border-radius: 14px; padding: 1.25rem; text-align: center; cursor: pointer; transition: all 0.2s; }
+.category-card:hover { border-color: #97c459; box-shadow: 0 4px 15px rgba(99,153,34,0.1); transform: translateY(-2px); }
+.category-card.selected { border-color: #639922; background: linear-gradient(135deg,#eaf3de,#d4edbe); }
+.category-icon { font-size: 2rem; margin-bottom: 8px; }
+.category-title { font-size: 13px; font-weight: 600; color: #1a3a1a; }
+.category-desc { font-size: 11px; color: #7a8f7a; margin-top: 4px; }
+.tip-card { background: white; border: 1px solid #e0ece0; border-radius: 14px; padding: 1.25rem; margin-bottom: 10px; display: flex; gap: 1rem; align-items: flex-start; transition: all 0.2s; }
+.tip-card:hover { border-color: #97c459; box-shadow: 0 4px 15px rgba(99,153,34,0.08); }
+.tip-number { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg,#eaf3de,#d4edbe); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #27500a; flex-shrink: 0; }
+.tip-content { flex: 1; }
+.tip-title { font-size: 13px; font-weight: 600; color: #1a3a1a; margin-bottom: 4px; }
+.tip-text { font-size: 12px; color: #5a6b5a; line-height: 1.6; }
+.daily-tip { background: linear-gradient(135deg,#1a3a1a,#2d5a1a); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.25rem; }
+.daily-tip-label { font-size: 10px; color: #97c459; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+.daily-tip-text { font-size: 14px; color: white; line-height: 1.7; }
+.disclaimer { background: #fff8e1; border: 1px solid #f0c040; border-radius: 10px; padding: 0.75rem 1rem; font-size: 11px; color: #7a6000; margin-top: 1rem; }
+div[data-testid="stButton"] button { background: linear-gradient(135deg,#3b6d11,#639922) !important; color: white !important; border: none !important; border-radius: 8px !important; font-weight: 600 !important; font-size: 13px !important; padding: 0.6rem 1.5rem !important; }
+div[data-testid="stButton"] button:hover { background: linear-gradient(135deg,#27500a,#3b6d11) !important; box-shadow: 0 4px 15px rgba(99,153,34,0.3) !important; }
 </style>
-<div class="page-title">💡 HEALTH TIPS DASHBOARD</div>
-<p style="color: #00d4ff; letter-spacing: 2px; text-transform: uppercase; font-size: 0.9rem;">AI-curated health tips for a better life</p>
 """, unsafe_allow_html=True)
 
-tips = {
-    "❤️ Heart Health": [
-        "Exercise at least 30 minutes daily to strengthen your heart muscle.",
-        "Reduce sodium intake to keep blood pressure in check.",
-        "Eat more omega-3 rich foods like salmon, walnuts, and flaxseeds.",
-        "Quit smoking — it's the single best thing you can do for your heart.",
-        "Manage stress through meditation, yoga, or deep breathing exercises.",
-    ],
-    "🫁 Lung Health": [
-        "Practice deep breathing exercises for 10 minutes every morning.",
-        "Avoid exposure to air pollutants and wear a mask in dusty areas.",
-        "Stay hydrated — water helps keep your airways moist and clear.",
-        "Get vaccinated against flu and pneumonia to protect your lungs.",
-        "Indoor plants like peace lilies can help purify indoor air.",
-    ],
-    "🧠 Mental Health": [
-        "Practice mindfulness meditation for at least 10 minutes daily.",
-        "Maintain a consistent sleep schedule — aim for 7-9 hours per night.",
-        "Stay socially connected — loneliness is as harmful as smoking.",
-        "Limit social media usage to reduce anxiety and comparison.",
-        "Journal your thoughts daily to process emotions effectively.",
-    ],
-    "🥗 Nutrition": [
-        "Eat a rainbow of vegetables — different colors mean different nutrients.",
-        "Drink at least 8 glasses of water daily to stay properly hydrated.",
-        "Reduce processed sugar intake to lower inflammation in the body.",
-        "Include probiotics like yogurt to maintain a healthy gut microbiome.",
-        "Don't skip breakfast — it kickstarts your metabolism for the day.",
-    ],
-    "🏃 Exercise": [
-        "Walk 10,000 steps daily to significantly improve cardiovascular health.",
-        "Include strength training twice a week to maintain muscle mass.",
-        "Stretch for 10 minutes after every workout to prevent injury.",
-        "Take the stairs instead of the elevator whenever possible.",
-        "Even 5 minutes of movement every hour reduces sedentary risk.",
-    ],
-    "😴 Sleep": [
-        "Keep your bedroom cool (18-20°C) for optimal sleep quality.",
-        "Avoid screens 1 hour before bed to reduce blue light exposure.",
-        "Establish a consistent bedtime routine to signal your brain to sleep.",
-        "Avoid caffeine after 2 PM to ensure it clears your system by bedtime.",
-        "Use blackout curtains to create a dark sleep environment.",
-    ],
+st.markdown("""
+<div class="topbar">
+    <div>
+        <div class="topbar-title">💡 Health Tips Dashboard</div>
+        <div class="topbar-sub">AI-generated personalized health tips via Groq</div>
+    </div>
+    <div class="ai-badge"><span class="ai-dot"></span> Groq AI Active</div>
+</div>
+""", unsafe_allow_html=True)
+
+categories = {
+    "❤️ Heart Health": "heart health, cardiovascular fitness, blood pressure management",
+    "🫁 Lung Health": "lung health, breathing exercises, respiratory wellness",
+    "🧠 Mental Health": "mental health, stress management, mindfulness, anxiety relief",
+    "🥗 Nutrition": "nutrition, healthy eating, diet, vitamins and minerals",
+    "🏃 Exercise": "exercise, fitness, workout routines, physical activity",
+    "😴 Sleep": "sleep quality, sleep hygiene, insomnia remedies, rest and recovery",
+    "💧 Hydration": "hydration, water intake, fluid balance, detox",
+    "🦷 Dental Health": "dental health, oral hygiene, teeth care",
+    "👁️ Eye Health": "eye health, vision care, screen time management",
+    "🧴 Skin Health": "skin health, skincare routine, sun protection",
+    "🦴 Bone Health": "bone health, calcium, osteoporosis prevention",
+    "🍽️ Digestive Health": "digestive health, gut microbiome, probiotics, fiber intake"
 }
 
-category = st.selectbox("🔍 Select Health Category", list(tips.keys()))
+# Daily tip from AI
+if "daily_tip" not in st.session_state:
+    try:
+        client = Groq(api_key=st.secrets["GROQ_API_KEY"])
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": "Give me one powerful health tip for today in 2 sentences. Be specific and actionable. No intro, just the tip."}],
+            max_tokens=80
+        )
+        st.session_state.daily_tip = response.choices[0].message.content
+    except:
+        st.session_state.daily_tip = "Drink a glass of water first thing in the morning to kickstart your metabolism and hydrate your body after sleep."
 
-if st.button("⚡ GET TIPS"):
-    selected_tips = tips[category]
-    colors = ["#00d4ff", "#7b2ff7", "#ff006e", "#00ff96", "#ffaa00"]
+st.markdown(f"""
+<div class="daily-tip">
+    <div class="daily-tip-label">⭐ Today's AI Health Tip</div>
+    <div class="daily-tip-text">{st.session_state.daily_tip}</div>
+</div>
+""", unsafe_allow_html=True)
 
-    for i, tip in enumerate(selected_tips):
-        color = colors[i % len(colors)]
+# Category selection
+st.markdown("### 🔍 Select a Health Category")
+category = st.selectbox("Category", list(categories.keys()), label_visibility="collapsed")
+
+col1, col2 = st.columns([3, 1])
+with col1:
+    age_group = st.selectbox("Age Group", ["18-25", "26-35", "36-45", "46-55", "55+"])
+with col2:
+    if st.button("⚡ Generate AI Tips"):
+        with st.spinner("🤖 Generating personalized tips..."):
+            try:
+                client = Groq(api_key=st.secrets["GROQ_API_KEY"])
+                prompt = f"""
+                Generate 5 specific, actionable health tips about {categories[category]} 
+                for someone in the {age_group} age group.
+                Format each tip as:
+                TITLE: [short title max 5 words]
+                TIP: [2-3 sentence detailed explanation]
+                
+                Make them practical, evidence-based and age-appropriate.
+                Number them 1-5.
+                """
+                response = client.chat.completions.create(
+                    model="llama-3.3-70b-versatile",
+                    messages=[{"role": "user", "content": prompt}],
+                    max_tokens=600
+                )
+                st.session_state.tips_result = response.choices[0].message.content
+                st.session_state.tips_category = category
+            except Exception as e:
+                st.error(f"Error: {e}")
+
+# Display tips
+if "tips_result" in st.session_state:
+    st.markdown(f"### {st.session_state.tips_category} Tips")
+    lines = st.session_state.tips_result.strip().split('\n')
+    tip_num = 0
+    current_title = ""
+    current_text = ""
+
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        if line.startswith("TITLE:"):
+            if current_title and current_text:
+                tip_num += 1
+                st.markdown(f"""
+                <div class="tip-card">
+                    <div class="tip-number">{tip_num}</div>
+                    <div class="tip-content">
+                        <div class="tip-title">{current_title}</div>
+                        <div class="tip-text">{current_text}</div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+            current_title = line.replace("TITLE:", "").strip()
+            current_text = ""
+        elif line.startswith("TIP:"):
+            current_text = line.replace("TIP:", "").strip()
+
+    if current_title and current_text:
+        tip_num += 1
         st.markdown(f"""
         <div class="tip-card">
-            <div class="tip-category" style="color:{color}">💡 TIP {i+1}</div>
-            <div class="tip-text">{tip}</div>
+            <div class="tip-number">{tip_num}</div>
+            <div class="tip-content">
+                <div class="tip-title">{current_title}</div>
+                <div class="tip-text">{current_text}</div>
+            </div>
         </div>
         """, unsafe_allow_html=True)
 
-# Daily tip
-st.markdown("---")
-all_tips = [tip for tips_list in tips.values() for tip in tips_list]
-daily_tip = random.choice(all_tips)
-st.markdown(f"""
-<div style="background: linear-gradient(135deg, rgba(0,212,255,0.1), rgba(123,47,247,0.1));
-border: 1px solid rgba(0,212,255,0.3); border-radius: 20px; padding: 2rem; text-align: center;">
-    <div style="font-family: Orbitron; color: #00d4ff; font-size: 0.8rem; letter-spacing: 3px; margin-bottom: 1rem;">
-        ⭐ DAILY HEALTH TIP
-    </div>
-    <div style="color: white; font-size: 1.1rem; line-height: 1.6;">{daily_tip}</div>
-</div>
-""", unsafe_allow_html=True)
+st.markdown('<div class="disclaimer">⚠️ For educational purposes only. Always consult a qualified doctor.</div>', unsafe_allow_html=True)
