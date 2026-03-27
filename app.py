@@ -12,6 +12,10 @@ st.markdown("""
 
 * { font-family: 'Inter', sans-serif; }
 
+[data-testid="stSidebarNav"] {
+    display: none !important;
+}
+
 [data-testid="stSidebarCollapsedControl"] {
     display: none !important;
 }
@@ -19,32 +23,12 @@ st.markdown("""
 [data-testid="stSidebar"] {
     min-width: 220px !important;
     max-width: 220px !important;
-    transform: none !important;
     background: #ffffff !important;
     border-right: 1px solid #e0ece0 !important;
 }
 
 [data-testid="stSidebar"] * {
     color: #1a3a1a !important;
-}
-
-[data-testid="stSidebarNav"] a {
-    border-radius: 8px !important;
-    margin-bottom: 2px !important;
-    font-size: 13px !important;
-    color: #5a6b5a !important;
-    padding: 7px 10px !important;
-}
-
-[data-testid="stSidebarNav"] a:hover {
-    background: #f5f9f0 !important;
-    color: #3b6d11 !important;
-}
-
-[data-testid="stSidebarNav"] a[aria-current="page"] {
-    background: linear-gradient(135deg, #eaf3de, #d4edbe) !important;
-    color: #27500a !important;
-    font-weight: 600 !important;
 }
 
 .stApp {
@@ -208,19 +192,68 @@ st.markdown("""
     color: #7a6000;
 }
 
+.sidebar-logo {
+    padding: 0 0 1rem 0;
+    border-bottom: 1px solid #e0ece0;
+    margin-bottom: 1rem;
+}
+
+.sidebar-brand {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1a3a1a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sidebar-brand-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: linear-gradient(135deg,#639922,#97c459);
+    flex-shrink: 0;
+}
+
+.sidebar-brand-sub {
+    font-size: 10px;
+    color: #639922 !important;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-top: 2px;
+}
+
 .sidebar-section {
     font-size: 10px;
     color: #97c459 !important;
     letter-spacing: 1px;
     text-transform: uppercase;
     font-weight: 600;
-    padding: 12px 0 4px 0;
+    padding: 12px 0 6px 0;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border-radius: 8px;
+    margin-bottom: 2px;
+    font-size: 13px;
+    color: #5a6b5a !important;
+    text-decoration: none !important;
+    transition: all 0.15s;
+}
+
+.sidebar-link:hover {
+    background: #f5f9f0;
+    color: #3b6d11 !important;
 }
 
 .sidebar-divider {
     border: none;
     border-top: 1px solid #e0ece0;
-    margin: 6px 0;
+    margin: 4px 0;
 }
 </style>
 
@@ -298,9 +331,28 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.sidebar.markdown("""
+<div class="sidebar-logo">
+    <div class="sidebar-brand">
+        <div class="sidebar-brand-dot"></div>
+        HealthAI
+    </div>
+    <div class="sidebar-brand-sub">Smart Companion · 2026</div>
+</div>
+
 <div class="sidebar-section">⚕ Diagnostics</div>
+<a class="sidebar-link" href="/Heart_Disease">🫀 Heart Disease</a>
+<a class="sidebar-link" href="/Xray_Analysis">🫁 X-Ray Analysis</a>
+<a class="sidebar-link" href="/Symptom_Checker">🔍 Symptom Checker</a>
+
 <hr class="sidebar-divider"/>
 <div class="sidebar-section">🔧 Tools</div>
+<a class="sidebar-link" href="/Health_Chatbot">🤖 AI Chatbot</a>
+<a class="sidebar-link" href="/BMI_Calculator">⚖️ BMI Calculator</a>
+<a class="sidebar-link" href="/Risk_Gauge">📊 Risk Gauge</a>
+
 <hr class="sidebar-divider"/>
 <div class="sidebar-section">📁 Records</div>
+<a class="sidebar-link" href="/Health_Tips">💡 Health Tips</a>
+<a class="sidebar-link" href="/Medical_History">📋 Medical History</a>
+<a class="sidebar-link" href="/Patient_Report">📄 Patient Report</a>
 """, unsafe_allow_html=True)
