@@ -1,4 +1,5 @@
 import streamlit as st
+from groq import Groq
 from fpdf import FPDF
 import tempfile
 import os
@@ -8,145 +9,321 @@ st.set_page_config(page_title="Patient Report", page_icon="📄", layout="wide")
 
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap');
-    .stApp { background: linear-gradient(135deg, #0a0a1a 0%, #0d1b2a 40%, #1a0a2e 100%); font-family: 'Rajdhani', sans-serif; }
-    .page-title { font-family: 'Orbitron', monospace; font-size: 2.5rem; font-weight: 900; background: linear-gradient(90deg, #00d4ff, #7b2ff7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; animation: glow 3s ease-in-out infinite alternate; }
-    @keyframes glow { from { filter: drop-shadow(0 0 10px #00d4ff); } to { filter: drop-shadow(0 0 30px #7b2ff7); } }
-    .glass-card { background: rgba(255,255,255,0.05); backdrop-filter: blur(20px); border: 1px solid rgba(0,212,255,0.2); border-radius: 20px; padding: 2rem; margin: 1rem 0; }
-    .stButton > button { background: linear-gradient(90deg, #00d4ff, #7b2ff7) !important; color: white !important; border: none !important; border-radius: 12px !important; padding: 0.8rem 3rem !important; font-family: 'Orbitron', monospace !important; font-weight: 700 !important; width: 100% !important; margin-top: 1rem !important; }
-    .stTextInput label, .stTextArea label, .stSelectbox label, .stNumberInput label { color: #00d4ff !important; }
-    [data-testid="stSidebar"] { background: rgba(10,10,26,0.95) !important; border-right: 1px solid rgba(0,212,255,0.2) !important; }
-    [data-testid="stSidebar"] * { color: white !important; }
-    p, label { color: rgba(255,255,255,0.8) !important; }
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+* { font-family: 'Inter', sans-serif; }
+.stApp { background: #f0f4f0 !important; }
+[data-testid="stSidebar"] { background: #ffffff !important; border-right: 1px solid #e0ece0 !important; }
+[data-testid="stSidebar"] * { color: #1a3a1a !important; }
+[data-testid="stSidebarNav"] a[aria-current="page"] { background: linear-gradient(135deg,#eaf3de,#d4edbe) !important; color: #27500a !important; font-weight: 600 !important; }
+.topbar { background: white; border: 1px solid #e0ece0; border-radius: 16px; padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between; }
+.topbar-title { font-size: 20px; font-weight: 700; color: #1a3a1a; }
+.topbar-sub { font-size: 12px; color: #639922; margin-top: 2px; }
+.ai-badge { display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg,#eaf3de,#d4edbe); border: 1px solid #97c459; border-radius: 20px; padding: 5px 12px; font-size: 11px; color: #27500a; font-weight: 600; }
+.ai-dot { width: 6px; height: 6px; border-radius: 50%; background: #639922; display: inline-block; }
+.form-card { background: white; border: 1px solid #e0ece0; border-radius: 16px; overflow: hidden; margin-bottom: 1rem; }
+.form-header { padding: 1rem 1.25rem; background: linear-gradient(135deg,#f5f9f0,#eaf3de); border-bottom: 1px solid #e0ece0; display: flex; align-items: center; justify-content: space-between; }
+.form-header h2 { font-size: 14px; font-weight: 600; color: #1a3a1a; }
+.form-tag { font-size: 10px; color: #3b6d11; background: #d4edbe; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+.form-body { padding: 1.25rem; }
+.preview-card { background: white; border: 1px solid #e0ece0; border-radius: 16px; padding: 2rem; margin-bottom: 1rem; }
+.preview-header { background: linear-gradient(135deg,#1a3a1a,#3b6d11); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+.preview-title { font-size: 20px; font-weight: 700; color: white; margin-bottom: 4px; }
+.preview-sub { font-size: 12px; color: #97c459; }
+.preview-section { margin-bottom: 1.25rem; padding-bottom: 1.25rem; border-bottom: 1px solid #e0ece0; }
+.preview-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.preview-section-title { font-size: 11px; font-weight: 600; color: #639922; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+.preview-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 8px; }
+.preview-field { background: #f8faf8; border-radius: 8px; padding: 8px 12px; }
+.preview-field-label { font-size: 10px; color: #7a8f7a; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+.preview-field-value { font-size: 13px; font-weight: 600; color: #1a3a1a; }
+.ai-notes { background: #f5f9f0; border: 1px solid #d4edbe; border-radius: 10px; padding: 1rem; margin-top: 1rem; }
+.ai-notes-label { font-size: 11px; font-weight: 600; color: #639922; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.ai-notes-text { font-size: 12px; color: #3a4a3a; line-height: 1.7; }
+.disclaimer { background: #fff8e1; border: 1px solid #f0c040; border-radius: 10px; padding: 0.75rem 1rem; font-size: 11px; color: #7a6000; margin-top: 1rem; }
+div[data-testid="stButton"] button { background: linear-gradient(135deg,#3b6d11,#639922) !important; color: white !important; border: none !important; border-radius: 8px !important; font-weight: 600 !important; font-size: 13px !important; padding: 0.6rem 1.5rem !important; }
+div[data-testid="stButton"] button:hover { background: linear-gradient(135deg,#27500a,#3b6d11) !important; box-shadow: 0 4px 15px rgba(99,153,34,0.3) !important; }
+label { color: #1a3a1a !important; }
+p { color: #1a3a1a !important; }
 </style>
-<div class="page-title">📄 PATIENT REPORT GENERATOR</div>
-<p style="color: #00d4ff; letter-spacing: 2px; text-transform: uppercase; font-size: 0.9rem;">Generate a professional PDF health report</p>
 """, unsafe_allow_html=True)
 
-st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-st.markdown("### 👤 Patient Information")
+st.markdown("""
+<div class="topbar">
+    <div>
+        <div class="topbar-title">📄 Patient Report Generator</div>
+        <div class="topbar-sub">AI-written professional medical reports with PDF export</div>
+    </div>
+    <div class="ai-badge"><span class="ai-dot"></span> Groq AI Active</div>
+</div>
+""", unsafe_allow_html=True)
+
+# Patient Info
+st.markdown('<div class="form-card"><div class="form-header"><h2>👤 Patient Information</h2><span class="form-tag">Required</span></div><div class="form-body">', unsafe_allow_html=True)
+
+col1, col2, col3 = st.columns(3)
+with col1:
+    name = st.text_input("Full Name", placeholder="John Doe")
+    age = st.number_input("Age", min_value=1, max_value=120, value=30)
+    gender = st.selectbox("Gender", ["Male", "Female", "Other"])
+with col2:
+    blood_group = st.selectbox("Blood Group", ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"])
+    height = st.number_input("Height (cm)", value=170)
+    weight = st.number_input("Weight (kg)", value=70)
+with col3:
+    contact = st.text_input("Contact Number", placeholder="+1 234 567 8900")
+    doctor_name = st.text_input("Doctor Name", placeholder="Dr. Smith")
+    report_date = st.date_input("Report Date", value=date.today())
+
+st.markdown('</div></div>', unsafe_allow_html=True)
+
+# Medical Info
+st.markdown('<div class="form-card"><div class="form-header"><h2>🩺 Medical Information</h2><span class="form-tag">Clinical Data</span></div><div class="form-body">', unsafe_allow_html=True)
 
 col1, col2 = st.columns(2)
 with col1:
-    name = st.text_input("Full Name")
-    age = st.number_input("Age", min_value=1, max_value=120, value=30)
-    gender = st.selectbox("Gender", ["Male", "Female", "Other"])
-    blood_group = st.selectbox("Blood Group", ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"])
-
+    diagnosis = st.text_area("Diagnosis / Condition", height=100, placeholder="Primary diagnosis...")
+    medications = st.text_area("Medications Prescribed", height=100, placeholder="List medications and dosages...")
+    heart_risk = st.selectbox("Heart Disease Risk (from prediction)", ["Not assessed", "Low Risk", "Moderate Risk", "High Risk"])
 with col2:
-    height = st.number_input("Height (cm)", value=170)
-    weight = st.number_input("Weight (kg)", value=70)
-    contact = st.text_input("Contact Number")
-    doctor_name = st.text_input("Doctor Name")
+    xray_result = st.selectbox("X-Ray Result (from analysis)", ["Not done", "Normal", "Pneumonia Detected"])
+    symptoms = st.text_area("Presenting Symptoms", height=100, placeholder="List main symptoms...")
+    vitals = st.text_area("Vital Signs", height=100, placeholder="BP, Heart Rate, Temperature, etc...")
 
-st.markdown("### 🩺 Medical Information")
-col3, col4 = st.columns(2)
-with col3:
-    diagnosis = st.text_area("Diagnosis / Condition", height=100)
-    medications = st.text_area("Medications", height=100)
+st.markdown('</div></div>', unsafe_allow_html=True)
 
-with col4:
-    heart_risk = st.selectbox("Heart Disease Risk", ["Low", "Moderate", "High"])
-    xray_result = st.selectbox("X-Ray Result", ["Normal", "Pneumonia Detected", "Not Done"])
-    notes = st.text_area("Doctor Notes", height=100)
+col1, col2 = st.columns(2)
+with col1:
+    generate_preview = st.button("👁️ Preview & Generate AI Notes")
+with col2:
+    pass
 
-st.markdown('</div>', unsafe_allow_html=True)
-
-if st.button("📄 GENERATE PDF REPORT"):
-    if name:
-        bmi = weight / ((height/100) ** 2)
-
-        pdf = FPDF()
-        pdf.add_page()
-
-        # Header
-        pdf.set_fill_color(10, 10, 26)
-        pdf.rect(0, 0, 210, 40, 'F')
-        pdf.set_font('Helvetica', 'B', 22)
-        pdf.set_text_color(0, 212, 255)
-        pdf.cell(0, 15, '', ln=True)
-        pdf.cell(0, 10, 'SMART HEALTH COMPANION', align='C', ln=True)
-        pdf.set_font('Helvetica', '', 10)
-        pdf.set_text_color(150, 150, 200)
-        pdf.cell(0, 8, 'AI-Powered Medical Report', align='C', ln=True)
-
-        pdf.ln(10)
-        pdf.set_text_color(0, 0, 0)
-
-        # Patient Info
-        pdf.set_font('Helvetica', 'B', 14)
-        pdf.set_text_color(10, 10, 80)
-        pdf.cell(0, 10, 'PATIENT INFORMATION', ln=True)
-        pdf.set_draw_color(0, 212, 255)
-        pdf.line(10, pdf.get_y(), 200, pdf.get_y())
-        pdf.ln(3)
-
-        pdf.set_font('Helvetica', '', 11)
-        pdf.set_text_color(0, 0, 0)
-        info = [
-            ("Name", name), ("Age", str(age)), ("Gender", gender),
-            ("Blood Group", blood_group), ("Height", f"{height} cm"),
-            ("Weight", f"{weight} kg"), ("BMI", f"{bmi:.1f}"),
-            ("Contact", contact), ("Report Date", str(date.today())),
-            ("Doctor", doctor_name)
-        ]
-        for i in range(0, len(info), 2):
-            pdf.cell(95, 8, f"{info[i][0]}: {info[i][1]}", border=0)
-            if i+1 < len(info):
-                pdf.cell(95, 8, f"{info[i+1][0]}: {info[i+1][1]}", border=0)
-            pdf.ln()
-
-        pdf.ln(5)
-
-        # Medical Info
-        pdf.set_font('Helvetica', 'B', 14)
-        pdf.set_text_color(10, 10, 80)
-        pdf.cell(0, 10, 'MEDICAL INFORMATION', ln=True)
-        pdf.line(10, pdf.get_y(), 200, pdf.get_y())
-        pdf.ln(3)
-
-        pdf.set_font('Helvetica', '', 11)
-        pdf.set_text_color(0, 0, 0)
-        pdf.cell(0, 8, f"Heart Disease Risk: {heart_risk}", ln=True)
-        pdf.cell(0, 8, f"X-Ray Result: {xray_result}", ln=True)
-        pdf.ln(3)
-
-        pdf.set_font('Helvetica', 'B', 11)
-        pdf.cell(0, 8, "Diagnosis:", ln=True)
-        pdf.set_font('Helvetica', '', 11)
-        pdf.multi_cell(0, 7, diagnosis if diagnosis else "N/A")
-        pdf.ln(3)
-
-        pdf.set_font('Helvetica', 'B', 11)
-        pdf.cell(0, 8, "Medications:", ln=True)
-        pdf.set_font('Helvetica', '', 11)
-        pdf.multi_cell(0, 7, medications if medications else "N/A")
-        pdf.ln(3)
-
-        pdf.set_font('Helvetica', 'B', 11)
-        pdf.cell(0, 8, "Doctor Notes:", ln=True)
-        pdf.set_font('Helvetica', '', 11)
-        pdf.multi_cell(0, 7, notes if notes else "N/A")
-
-        # Footer
-        pdf.set_y(-20)
-        pdf.set_font('Helvetica', 'I', 8)
-        pdf.set_text_color(150, 150, 150)
-        pdf.cell(0, 10, 'This report is generated by Smart Health Companion AI. For educational purposes only. Consult a qualified doctor.', align='C')
-
-        # Save and download
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp:
-            pdf.output(tmp.name)
-            with open(tmp.name, 'rb') as f:
-                pdf_data = f.read()
-            os.unlink(tmp.name)
-
-        st.download_button(
-            label="⬇️ DOWNLOAD PDF REPORT",
-            data=pdf_data,
-            file_name=f"health_report_{name.replace(' ', '_')}.pdf",
-            mime="application/pdf"
-        )
-        st.success("✅ Report generated successfully!")
-    else:
+if generate_preview:
+    if not name:
         st.error("Please enter patient name.")
+    else:
+        bmi = weight / ((height / 100) ** 2)
+
+        with st.spinner("🤖 AI writing doctor notes..."):
+            try:
+                client = Groq(api_key=st.secrets["GROQ_API_KEY"])
+                prompt = f"""
+                Write professional doctor notes for a medical report:
+
+                Patient: {name}, {age} years old, {gender}
+                BMI: {bmi:.1f}
+                Diagnosis: {diagnosis if diagnosis else 'Not specified'}
+                Symptoms: {symptoms if symptoms else 'Not specified'}
+                Medications: {medications if medications else 'None'}
+                Heart Disease Risk: {heart_risk}
+                X-Ray Result: {xray_result}
+                Vitals: {vitals if vitals else 'Not recorded'}
+
+                Write 3-4 sentences of professional clinical notes that:
+                1. Summarize the patient's condition
+                2. Note key findings from the AI analysis
+                3. Recommend follow-up care
+                4. Include any medication notes
+
+                Write in formal medical language as a doctor would.
+                """
+                response = client.chat.completions.create(
+                    model="llama-3.3-70b-versatile",
+                    messages=[{"role": "user", "content": prompt}],
+                    max_tokens=250
+                )
+                ai_notes = response.choices[0].message.content
+                st.session_state.ai_notes = ai_notes
+                st.session_state.report_ready = True
+                st.session_state.report_data = {
+                    "name": name, "age": age, "gender": gender,
+                    "blood_group": blood_group, "height": height,
+                    "weight": weight, "bmi": bmi, "contact": contact,
+                    "doctor_name": doctor_name, "report_date": str(report_date),
+                    "diagnosis": diagnosis, "medications": medications,
+                    "heart_risk": heart_risk, "xray_result": xray_result,
+                    "symptoms": symptoms, "vitals": vitals,
+                    "ai_notes": ai_notes
+                }
+            except Exception as e:
+                st.error(f"Error generating AI notes: {e}")
+
+# Preview
+if "report_ready" in st.session_state and st.session_state.report_ready:
+    d = st.session_state.report_data
+    st.markdown("### 👁️ Report Preview")
+    st.markdown(f"""
+    <div class="preview-card">
+        <div class="preview-header">
+            <div class="preview-title">⚕ Smart Health Companion</div>
+            <div class="preview-sub">AI-Powered Medical Report · {d['report_date']}</div>
+        </div>
+
+        <div class="preview-section">
+            <div class="preview-section-title">Patient Information</div>
+            <div class="preview-grid">
+                <div class="preview-field">
+                    <div class="preview-field-label">Full Name</div>
+                    <div class="preview-field-value">{d['name']}</div>
+                </div>
+                <div class="preview-field">
+                    <div class="preview-field-label">Age / Gender</div>
+                    <div class="preview-field-value">{d['age']} years · {d['gender']}</div>
+                </div>
+                <div class="preview-field">
+                    <div class="preview-field-label">Blood Group</div>
+                    <div class="preview-field-value">{d['blood_group']}</div>
+                </div>
+                <div class="preview-field">
+                    <div class="preview-field-label">BMI</div>
+                    <div class="preview-field-value">{d['bmi']:.1f} kg/m²</div>
+                </div>
+                <div class="preview-field">
+                    <div class="preview-field-label">Height / Weight</div>
+                    <div class="preview-field-value">{d['height']} cm · {d['weight']} kg</div>
+                </div>
+                <div class="preview-field">
+                    <div class="preview-field-label">Doctor</div>
+                    <div class="preview-field-value">{d['doctor_name'] if d['doctor_name'] else 'Not specified'}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="preview-section">
+            <div class="preview-section-title">AI Analysis Results</div>
+            <div class="preview-grid">
+                <div class="preview-field">
+                    <div class="preview-field-label">Heart Disease Risk</div>
+                    <div class="preview-field-value">{d['heart_risk']}</div>
+                </div>
+                <div class="preview-field">
+                    <div class="preview-field-label">X-Ray Result</div>
+                    <div class="preview-field-value">{d['xray_result']}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="preview-section">
+            <div class="preview-section-title">Diagnosis & Treatment</div>
+            <div class="preview-field" style="margin-bottom:8px;">
+                <div class="preview-field-label">Diagnosis</div>
+                <div class="preview-field-value">{d['diagnosis'] if d['diagnosis'] else 'Not specified'}</div>
+            </div>
+            <div class="preview-field" style="margin-bottom:8px;">
+                <div class="preview-field-label">Medications</div>
+                <div class="preview-field-value">{d['medications'] if d['medications'] else 'None prescribed'}</div>
+            </div>
+            <div class="preview-field">
+                <div class="preview-field-label">Symptoms</div>
+                <div class="preview-field-value">{d['symptoms'] if d['symptoms'] else 'Not recorded'}</div>
+            </div>
+        </div>
+
+        <div class="preview-section">
+            <div class="preview-section-title">AI Doctor Notes</div>
+            <div class="ai-notes">
+                <div class="ai-notes-label">🤖 Generated by Groq AI</div>
+                <div class="ai-notes-text">{d['ai_notes']}</div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Generate PDF
+    if st.button("⬇️ Download PDF Report"):
+        try:
+            d = st.session_state.report_data
+            pdf = FPDF()
+            pdf.add_page()
+
+            # Header
+            pdf.set_fill_color(26, 58, 26)
+            pdf.rect(0, 0, 210, 35, 'F')
+            pdf.set_font('Helvetica', 'B', 18)
+            pdf.set_text_color(255, 255, 255)
+            pdf.cell(0, 12, '', ln=True)
+            pdf.cell(0, 8, 'SMART HEALTH COMPANION', align='C', ln=True)
+            pdf.set_font('Helvetica', '', 9)
+            pdf.set_text_color(151, 196, 89)
+            pdf.cell(0, 6, 'AI-Powered Medical Report', align='C', ln=True)
+            pdf.ln(8)
+
+            pdf.set_text_color(0, 0, 0)
+
+            def section_title(title):
+                pdf.set_font('Helvetica', 'B', 11)
+                pdf.set_text_color(59, 109, 17)
+                pdf.cell(0, 8, title, ln=True)
+                pdf.set_draw_color(151, 196, 89)
+                pdf.line(10, pdf.get_y(), 200, pdf.get_y())
+                pdf.ln(3)
+                pdf.set_text_color(0, 0, 0)
+
+            def field_row(label, value):
+                pdf.set_font('Helvetica', 'B', 9)
+                pdf.set_text_color(100, 100, 100)
+                pdf.cell(50, 7, label + ':', border=0)
+                pdf.set_font('Helvetica', '', 9)
+                pdf.set_text_color(0, 0, 0)
+                pdf.cell(0, 7, str(value), border=0, ln=True)
+
+            section_title('PATIENT INFORMATION')
+            field_row('Full Name', d['name'])
+            field_row('Age / Gender', f"{d['age']} years / {d['gender']}")
+            field_row('Blood Group', d['blood_group'])
+            field_row('Height / Weight', f"{d['height']} cm / {d['weight']} kg")
+            field_row('BMI', f"{d['bmi']:.1f} kg/m²")
+            field_row('Contact', d['contact'] if d['contact'] else 'Not provided')
+            field_row('Doctor', d['doctor_name'] if d['doctor_name'] else 'Not specified')
+            field_row('Report Date', d['report_date'])
+            pdf.ln(4)
+
+            section_title('AI ANALYSIS RESULTS')
+            field_row('Heart Disease Risk', d['heart_risk'])
+            field_row('X-Ray Result', d['xray_result'])
+            pdf.ln(4)
+
+            section_title('DIAGNOSIS & TREATMENT')
+            field_row('Diagnosis', d['diagnosis'] if d['diagnosis'] else 'Not specified')
+            field_row('Symptoms', d['symptoms'] if d['symptoms'] else 'Not recorded')
+            field_row('Vitals', d['vitals'] if d['vitals'] else 'Not recorded')
+            pdf.ln(2)
+            pdf.set_font('Helvetica', 'B', 9)
+            pdf.set_text_color(100, 100, 100)
+            pdf.cell(0, 7, 'Medications:', ln=True)
+            pdf.set_font('Helvetica', '', 9)
+            pdf.set_text_color(0, 0, 0)
+            pdf.multi_cell(0, 6, d['medications'] if d['medications'] else 'None prescribed')
+            pdf.ln(4)
+
+            section_title('AI DOCTOR NOTES')
+            pdf.set_font('Helvetica', '', 9)
+            pdf.set_fill_color(240, 248, 235)
+            pdf.set_text_color(40, 80, 10)
+            pdf.multi_cell(0, 6, d['ai_notes'], fill=True)
+            pdf.ln(4)
+
+            # Footer
+            pdf.set_y(-20)
+            pdf.set_font('Helvetica', 'I', 7)
+            pdf.set_text_color(150, 150, 150)
+            pdf.cell(0, 5, f'Generated by Smart Health Companion AI · {d["report_date"]} · For educational purposes only', align='C', ln=True)
+            pdf.cell(0, 5, 'This report is NOT a substitute for professional medical advice. Always consult a qualified doctor.', align='C')
+
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp:
+                pdf.output(tmp.name)
+                with open(tmp.name, 'rb') as f:
+                    pdf_data = f.read()
+                os.unlink(tmp.name)
+
+            st.download_button(
+                label="📥 Click here to download your PDF",
+                data=pdf_data,
+                file_name=f"health_report_{d['name'].replace(' ', '_')}_{d['report_date']}.pdf",
+                mime="application/pdf"
+            )
+            st.success("✅ PDF generated successfully!")
+
+        except Exception as e:
+            st.error(f"Error generating PDF: {e}")
+
+st.markdown('<div class="disclaimer">⚠️ For educational purposes only. This report should not replace professional medical consultation.</div>', unsafe_allow_html=True)
