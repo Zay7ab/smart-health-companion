@@ -150,20 +150,3 @@ if st.button("📄 GENERATE PDF REPORT"):
         st.success("✅ Report generated successfully!")
     else:
         st.error("Please enter patient name.")
-```
-
----
-
-Also update `requirements.txt` to add the new packages:
-```
-streamlit
-joblib
-numpy
-pandas
-scikit-learn
-Pillow
-groq
-gdown
-onnxruntime
-plotly
-fpdf2
