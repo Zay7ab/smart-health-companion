@@ -2,17 +2,18 @@ import streamlit as st
 import joblib
 import numpy as np
 from groq import Groq
+import sys
+sys.path.append('.')
+from utils.sidebar import load_sidebar
 
 st.set_page_config(page_title="Heart Disease Prediction", page_icon="🫀", layout="wide")
+load_sidebar()
 
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 * { font-family: 'Inter', sans-serif; }
 .stApp { background: #f0f4f0 !important; }
-[data-testid="stSidebar"] { background: #ffffff !important; border-right: 1px solid #e0ece0 !important; }
-[data-testid="stSidebar"] * { color: #1a3a1a !important; }
-[data-testid="stSidebarNav"] a[aria-current="page"] { background: linear-gradient(135deg,#eaf3de,#d4edbe) !important; color: #27500a !important; font-weight: 600 !important; }
 .topbar { background: white; border: 1px solid #e0ece0; border-radius: 16px; padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between; }
 .topbar-title { font-size: 20px; font-weight: 700; color: #1a3a1a; }
 .topbar-sub { font-size: 12px; color: #639922; margin-top: 2px; }
@@ -34,11 +35,12 @@ st.markdown("""
 .result-title { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
 .result-prob { font-size: 28px; font-weight: 700; letter-spacing: -1px; }
 .ai-insight { background: white; border: 1px solid #e0ece0; border-radius: 12px; padding: 1rem; margin-top: 1rem; }
-.ai-insight-header { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: #639922; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+.ai-insight-header { font-size: 11px; font-weight: 600; color: #639922; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
 .ai-insight-text { font-size: 13px; color: #3a4a3a; line-height: 1.7; }
 .disclaimer { background: #fff8e1; border: 1px solid #f0c040; border-radius: 10px; padding: 0.75rem 1rem; font-size: 11px; color: #7a6000; margin-top: 1rem; }
 div[data-testid="stButton"] button { background: linear-gradient(135deg,#3b6d11,#639922) !important; color: white !important; border: none !important; border-radius: 8px !important; font-weight: 600 !important; font-size: 13px !important; padding: 0.6rem 1.5rem !important; }
-div[data-testid="stButton"] button:hover { background: linear-gradient(135deg,#27500a,#3b6d11) !important; box-shadow: 0 4px 15px rgba(99,153,34,0.3) !important; }
+label { color: #1a3a1a !important; }
+p { color: #1a3a1a !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -76,7 +78,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 with st.container():
-    st.markdown('<div class="form-body">', unsafe_allow_html=True)
     col1, col2, col3 = st.columns(3)
     with col1:
         id = st.number_input("Patient ID", value=1)
@@ -96,7 +97,6 @@ with st.container():
         slope = st.selectbox("Slope", [0, 1, 2])
         ca = st.selectbox("Number of Major Vessels", [0, 1, 2, 3])
         thal = st.selectbox("Thal", [0, 1, 2, 3])
-    st.markdown('</div>', unsafe_allow_html=True)
 
 if st.button("⚡ Run AI Analysis"):
     try:
@@ -131,15 +131,13 @@ if st.button("⚡ Run AI Analysis"):
 
         with st.spinner("🤖 Getting AI insights..."):
             client = Groq(api_key=st.secrets["GROQ_API_KEY"])
-            prompt = f"""
-            Patient data: Age={age}, Sex={sex}, Chest Pain Type={cp}, 
+            prompt = f"""Patient data: Age={age}, Sex={sex}, Chest Pain Type={cp},
             Blood Pressure={trestbps}, Cholesterol={chol}, Max Heart Rate={thalach},
             ST Depression={oldpeak}, Major Vessels={ca}.
             Heart disease risk is {risk_level} ({probability*100:.1f}% probability).
             Give a brief 3-4 sentence professional medical insight about this result,
             key risk factors, and specific lifestyle recommendations. Be concise and clear.
-            End with: Always consult a qualified cardiologist.
-            """
+            End with: Always consult a qualified cardiologist."""
             response = client.chat.completions.create(
                 model="llama-3.3-70b-versatile",
                 messages=[{"role": "user", "content": prompt}],
