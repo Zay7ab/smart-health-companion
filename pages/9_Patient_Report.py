@@ -4,17 +4,18 @@ from fpdf import FPDF
 import tempfile
 import os
 from datetime import date
+import sys
+sys.path.append('.')
+from utils.sidebar import load_sidebar
 
 st.set_page_config(page_title="Patient Report", page_icon="📄", layout="wide")
+load_sidebar()
 
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 * { font-family: 'Inter', sans-serif; }
 .stApp { background: #f0f4f0 !important; }
-[data-testid="stSidebar"] { background: #ffffff !important; border-right: 1px solid #e0ece0 !important; }
-[data-testid="stSidebar"] * { color: #1a3a1a !important; }
-[data-testid="stSidebarNav"] a[aria-current="page"] { background: linear-gradient(135deg,#eaf3de,#d4edbe) !important; color: #27500a !important; font-weight: 600 !important; }
 .topbar { background: white; border: 1px solid #e0ece0; border-radius: 16px; padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between; }
 .topbar-title { font-size: 20px; font-weight: 700; color: #1a3a1a; }
 .topbar-sub { font-size: 12px; color: #639922; margin-top: 2px; }
@@ -27,8 +28,6 @@ st.markdown("""
 .form-body { padding: 1.25rem; }
 .preview-card { background: white; border: 1px solid #e0ece0; border-radius: 16px; padding: 2rem; margin-bottom: 1rem; }
 .preview-header { background: linear-gradient(135deg,#1a3a1a,#3b6d11); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
-.preview-title { font-size: 20px; font-weight: 700; color: white; margin-bottom: 4px; }
-.preview-sub { font-size: 12px; color: #97c459; }
 .preview-section { margin-bottom: 1.25rem; padding-bottom: 1.25rem; border-bottom: 1px solid #e0ece0; }
 .preview-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
 .preview-section-title { font-size: 11px; font-weight: 600; color: #639922; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
@@ -36,12 +35,8 @@ st.markdown("""
 .preview-field { background: #f8faf8; border-radius: 8px; padding: 8px 12px; }
 .preview-field-label { font-size: 10px; color: #7a8f7a; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
 .preview-field-value { font-size: 13px; font-weight: 600; color: #1a3a1a; }
-.ai-notes { background: #f5f9f0; border: 1px solid #d4edbe; border-radius: 10px; padding: 1rem; margin-top: 1rem; }
-.ai-notes-label { font-size: 11px; font-weight: 600; color: #639922; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
-.ai-notes-text { font-size: 12px; color: #3a4a3a; line-height: 1.7; }
 .disclaimer { background: #fff8e1; border: 1px solid #f0c040; border-radius: 10px; padding: 0.75rem 1rem; font-size: 11px; color: #7a6000; margin-top: 1rem; }
 div[data-testid="stButton"] button { background: linear-gradient(135deg,#3b6d11,#639922) !important; color: white !important; border: none !important; border-radius: 8px !important; font-weight: 600 !important; font-size: 13px !important; padding: 0.6rem 1.5rem !important; }
-div[data-testid="stButton"] button:hover { background: linear-gradient(135deg,#27500a,#3b6d11) !important; box-shadow: 0 4px 15px rgba(99,153,34,0.3) !important; }
 label { color: #1a3a1a !important; }
 p { color: #1a3a1a !important; }
 </style>
@@ -57,9 +52,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Patient Info
 st.markdown('<div class="form-card"><div class="form-header"><h2>👤 Patient Information</h2><span class="form-tag">Required</span></div><div class="form-body">', unsafe_allow_html=True)
-
 col1, col2, col3 = st.columns(3)
 with col1:
     name = st.text_input("Full Name", placeholder="John Doe")
@@ -73,59 +66,32 @@ with col3:
     contact = st.text_input("Contact Number", placeholder="+1 234 567 8900")
     doctor_name = st.text_input("Doctor Name", placeholder="Dr. Smith")
     report_date = st.date_input("Report Date", value=date.today())
-
 st.markdown('</div></div>', unsafe_allow_html=True)
 
-# Medical Info
 st.markdown('<div class="form-card"><div class="form-header"><h2>🩺 Medical Information</h2><span class="form-tag">Clinical Data</span></div><div class="form-body">', unsafe_allow_html=True)
-
 col1, col2 = st.columns(2)
 with col1:
     diagnosis = st.text_area("Diagnosis / Condition", height=100, placeholder="Primary diagnosis...")
     medications = st.text_area("Medications Prescribed", height=100, placeholder="List medications and dosages...")
-    heart_risk = st.selectbox("Heart Disease Risk (from prediction)", ["Not assessed", "Low Risk", "Moderate Risk", "High Risk"])
+    heart_risk = st.selectbox("Heart Disease Risk", ["Not assessed", "Low Risk", "Moderate Risk", "High Risk"])
 with col2:
-    xray_result = st.selectbox("X-Ray Result (from analysis)", ["Not done", "Normal", "Pneumonia Detected"])
+    xray_result = st.selectbox("X-Ray Result", ["Not done", "Normal", "Pneumonia Detected"])
     symptoms = st.text_area("Presenting Symptoms", height=100, placeholder="List main symptoms...")
     vitals = st.text_area("Vital Signs", height=100, placeholder="BP, Heart Rate, Temperature, etc...")
-
 st.markdown('</div></div>', unsafe_allow_html=True)
 
-col1, col2 = st.columns(2)
-with col1:
-    generate_preview = st.button("👁️ Preview & Generate AI Notes")
-with col2:
-    pass
-
-if generate_preview:
+if st.button("👁️ Preview & Generate AI Notes"):
     if not name:
         st.error("Please enter patient name.")
     else:
         bmi = weight / ((height / 100) ** 2)
-
         with st.spinner("🤖 AI writing doctor notes..."):
             try:
                 client = Groq(api_key=st.secrets["GROQ_API_KEY"])
-                prompt = f"""
-                Write professional doctor notes for a medical report:
-
-                Patient: {name}, {age} years old, {gender}
-                BMI: {bmi:.1f}
-                Diagnosis: {diagnosis if diagnosis else 'Not specified'}
-                Symptoms: {symptoms if symptoms else 'Not specified'}
-                Medications: {medications if medications else 'None'}
-                Heart Disease Risk: {heart_risk}
-                X-Ray Result: {xray_result}
-                Vitals: {vitals if vitals else 'Not recorded'}
-
-                Write 3-4 sentences of professional clinical notes that:
-                1. Summarize the patient's condition
-                2. Note key findings from the AI analysis
-                3. Recommend follow-up care
-                4. Include any medication notes
-
-                Write in formal medical language as a doctor would.
-                """
+                prompt = f"""Write professional doctor notes for: {name}, {age}yo {gender}, BMI {bmi:.1f},
+                Diagnosis: {diagnosis or 'Not specified'}, Symptoms: {symptoms or 'Not specified'},
+                Medications: {medications or 'None'}, Heart Risk: {heart_risk}, X-Ray: {xray_result}, Vitals: {vitals or 'Not recorded'}.
+                Write 3-4 sentences of formal clinical notes summarizing condition, AI findings, and follow-up care."""
                 response = client.chat.completions.create(
                     model="llama-3.3-70b-versatile",
                     messages=[{"role": "user", "content": prompt}],
@@ -135,107 +101,64 @@ if generate_preview:
                 st.session_state.ai_notes = ai_notes
                 st.session_state.report_ready = True
                 st.session_state.report_data = {
-                    "name": name, "age": age, "gender": gender,
-                    "blood_group": blood_group, "height": height,
-                    "weight": weight, "bmi": bmi, "contact": contact,
+                    "name": name, "age": age, "gender": gender, "blood_group": blood_group,
+                    "height": height, "weight": weight, "bmi": bmi, "contact": contact,
                     "doctor_name": doctor_name, "report_date": str(report_date),
-                    "diagnosis": diagnosis, "medications": medications,
-                    "heart_risk": heart_risk, "xray_result": xray_result,
-                    "symptoms": symptoms, "vitals": vitals,
-                    "ai_notes": ai_notes
+                    "diagnosis": diagnosis, "medications": medications, "heart_risk": heart_risk,
+                    "xray_result": xray_result, "symptoms": symptoms, "vitals": vitals, "ai_notes": ai_notes
                 }
             except Exception as e:
-                st.error(f"Error generating AI notes: {e}")
+                st.error(f"Error: {e}")
 
-# Preview
 if "report_ready" in st.session_state and st.session_state.report_ready:
     d = st.session_state.report_data
     st.markdown("### 👁️ Report Preview")
     st.markdown(f"""
     <div class="preview-card">
         <div class="preview-header">
-            <div class="preview-title">⚕ Smart Health Companion</div>
-            <div class="preview-sub">AI-Powered Medical Report · {d['report_date']}</div>
+            <div style="font-size:20px;font-weight:700;color:white;">⚕ Smart Health Companion</div>
+            <div style="font-size:12px;color:#97c459;">AI-Powered Medical Report · {d['report_date']}</div>
         </div>
-
         <div class="preview-section">
             <div class="preview-section-title">Patient Information</div>
             <div class="preview-grid">
-                <div class="preview-field">
-                    <div class="preview-field-label">Full Name</div>
-                    <div class="preview-field-value">{d['name']}</div>
-                </div>
-                <div class="preview-field">
-                    <div class="preview-field-label">Age / Gender</div>
-                    <div class="preview-field-value">{d['age']} years · {d['gender']}</div>
-                </div>
-                <div class="preview-field">
-                    <div class="preview-field-label">Blood Group</div>
-                    <div class="preview-field-value">{d['blood_group']}</div>
-                </div>
-                <div class="preview-field">
-                    <div class="preview-field-label">BMI</div>
-                    <div class="preview-field-value">{d['bmi']:.1f} kg/m²</div>
-                </div>
-                <div class="preview-field">
-                    <div class="preview-field-label">Height / Weight</div>
-                    <div class="preview-field-value">{d['height']} cm · {d['weight']} kg</div>
-                </div>
-                <div class="preview-field">
-                    <div class="preview-field-label">Doctor</div>
-                    <div class="preview-field-value">{d['doctor_name'] if d['doctor_name'] else 'Not specified'}</div>
-                </div>
+                <div class="preview-field"><div class="preview-field-label">Full Name</div><div class="preview-field-value">{d['name']}</div></div>
+                <div class="preview-field"><div class="preview-field-label">Age / Gender</div><div class="preview-field-value">{d['age']} years · {d['gender']}</div></div>
+                <div class="preview-field"><div class="preview-field-label">Blood Group</div><div class="preview-field-value">{d['blood_group']}</div></div>
+                <div class="preview-field"><div class="preview-field-label">BMI</div><div class="preview-field-value">{d['bmi']:.1f} kg/m²</div></div>
+                <div class="preview-field"><div class="preview-field-label">Height / Weight</div><div class="preview-field-value">{d['height']} cm · {d['weight']} kg</div></div>
+                <div class="preview-field"><div class="preview-field-label">Doctor</div><div class="preview-field-value">{d['doctor_name'] if d['doctor_name'] else 'Not specified'}</div></div>
             </div>
         </div>
-
         <div class="preview-section">
             <div class="preview-section-title">AI Analysis Results</div>
             <div class="preview-grid">
-                <div class="preview-field">
-                    <div class="preview-field-label">Heart Disease Risk</div>
-                    <div class="preview-field-value">{d['heart_risk']}</div>
-                </div>
-                <div class="preview-field">
-                    <div class="preview-field-label">X-Ray Result</div>
-                    <div class="preview-field-value">{d['xray_result']}</div>
-                </div>
+                <div class="preview-field"><div class="preview-field-label">Heart Disease Risk</div><div class="preview-field-value">{d['heart_risk']}</div></div>
+                <div class="preview-field"><div class="preview-field-label">X-Ray Result</div><div class="preview-field-value">{d['xray_result']}</div></div>
             </div>
         </div>
-
         <div class="preview-section">
             <div class="preview-section-title">Diagnosis & Treatment</div>
-            <div class="preview-field" style="margin-bottom:8px;">
-                <div class="preview-field-label">Diagnosis</div>
-                <div class="preview-field-value">{d['diagnosis'] if d['diagnosis'] else 'Not specified'}</div>
-            </div>
-            <div class="preview-field" style="margin-bottom:8px;">
-                <div class="preview-field-label">Medications</div>
-                <div class="preview-field-value">{d['medications'] if d['medications'] else 'None prescribed'}</div>
-            </div>
-            <div class="preview-field">
-                <div class="preview-field-label">Symptoms</div>
-                <div class="preview-field-value">{d['symptoms'] if d['symptoms'] else 'Not recorded'}</div>
-            </div>
+            <div class="preview-field" style="margin-bottom:8px;"><div class="preview-field-label">Diagnosis</div><div class="preview-field-value">{d['diagnosis'] if d['diagnosis'] else 'Not specified'}</div></div>
+            <div class="preview-field" style="margin-bottom:8px;"><div class="preview-field-label">Medications</div><div class="preview-field-value">{d['medications'] if d['medications'] else 'None prescribed'}</div></div>
+            <div class="preview-field"><div class="preview-field-label">Symptoms</div><div class="preview-field-value">{d['symptoms'] if d['symptoms'] else 'Not recorded'}</div></div>
         </div>
-
         <div class="preview-section">
             <div class="preview-section-title">AI Doctor Notes</div>
-            <div class="ai-notes">
-                <div class="ai-notes-label">🤖 Generated by Groq AI</div>
-                <div class="ai-notes-text">{d['ai_notes']}</div>
+            <div style="background:#f5f9f0;border:1px solid #d4edbe;border-radius:10px;padding:1rem;">
+                <div style="font-size:11px;font-weight:600;color:#639922;margin-bottom:6px;">🤖 Generated by Groq AI</div>
+                <div style="font-size:12px;color:#3a4a3a;line-height:1.7;">{d['ai_notes']}</div>
             </div>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # Generate PDF
     if st.button("⬇️ Download PDF Report"):
         try:
             d = st.session_state.report_data
             pdf = FPDF()
             pdf.add_page()
 
-            # Header
             pdf.set_fill_color(26, 58, 26)
             pdf.rect(0, 0, 210, 35, 'F')
             pdf.set_font('Helvetica', 'B', 18)
@@ -246,7 +169,6 @@ if "report_ready" in st.session_state and st.session_state.report_ready:
             pdf.set_text_color(151, 196, 89)
             pdf.cell(0, 6, 'AI-Powered Medical Report', align='C', ln=True)
             pdf.ln(8)
-
             pdf.set_text_color(0, 0, 0)
 
             def section_title(title):
@@ -300,9 +222,7 @@ if "report_ready" in st.session_state and st.session_state.report_ready:
             pdf.set_fill_color(240, 248, 235)
             pdf.set_text_color(40, 80, 10)
             pdf.multi_cell(0, 6, d['ai_notes'], fill=True)
-            pdf.ln(4)
 
-            # Footer
             pdf.set_y(-20)
             pdf.set_font('Helvetica', 'I', 7)
             pdf.set_text_color(150, 150, 150)
@@ -322,7 +242,6 @@ if "report_ready" in st.session_state and st.session_state.report_ready:
                 mime="application/pdf"
             )
             st.success("✅ PDF generated successfully!")
-
         except Exception as e:
             st.error(f"Error generating PDF: {e}")
 
