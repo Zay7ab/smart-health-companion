@@ -1,9 +1,0 @@
-[theme]
-base = "light"
-primaryColor = "#639922"
-backgroundColor = "#f0f4f0"
-secondaryBackgroundColor = "#ffffff"
-textColor = "#1a3a1a"
-
-[ui]
-hideSidebarNavigation = false
