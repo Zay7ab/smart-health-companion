@@ -33,6 +33,8 @@ def load_sidebar():
 
     st.sidebar.markdown('<div class="sidebar-section">⚕ Diagnostics</div>', unsafe_allow_html=True)
     st.sidebar.page_link("app.py", label="🏠 Home")
+    st.sidebar.markdown('<hr class="sidebar-divider"/><div class="sidebar-section">🌍 Directory</div>', unsafe_allow_html=True)
+    st.sidebar.page_link("pages/10_Find_Doctor.py", label="👨‍⚕️ Find a Doctor")
     st.sidebar.page_link("pages/1_Heart_Disease.py", label="🫀 Heart Disease")
     st.sidebar.page_link("pages/2_Xray_Analysis.py", label="🫁 X-Ray Analysis")
     st.sidebar.page_link("pages/7_Symptom_Checker.py", label="🔍 Symptom Checker")
