@@ -20,6 +20,8 @@ st.markdown("""
 .hero h1 { font-size: 2.8rem; font-weight: 700; color: #ffffff; letter-spacing: -1px; line-height: 1.15; margin-bottom: 1rem; }
 .hero h1 span { color: #97c459; }
 .hero p { font-size: 1rem; color: rgba(255,255,255,0.7); line-height: 1.7; max-width: 500px; }
+.hero-icon-box { width: 80px; height: 80px; background: rgba(255,255,255,0.12); border: 1.5px solid rgba(255,255,255,0.25); border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; transition: all 0.3s ease; }
+.hero-icon-box:hover { background: rgba(255,255,255,0.2); transform: translateY(-4px); }
 .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 1.5rem; }
 .stat-card { background: white; border: 1px solid #e0ece0; border-radius: 14px; padding: 1.25rem; position: relative; overflow: hidden; }
 .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #639922, #97c459); }
@@ -45,12 +47,38 @@ st.markdown("""
 [data-testid="stPageLink"] p { font-size: 13px !important; color: #5a6b5a !important; font-weight: 400 !important; }
 [data-testid="stPageLink"][aria-current="page"] p { color: #27500a !important; font-weight: 600 !important; }
 [data-testid="stPageLink"][aria-current="page"] { background: linear-gradient(135deg,#eaf3de,#d4edbe) !important; }
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-6px); }
+    100% { transform: translateY(0px); }
+}
 </style>
 
 <div class="hero">
-    <div class="hero-badge">⚡ AI-Powered · 2026</div>
-    <h1>Smart <span>Health</span><br/>Companion</h1>
-    <p>Advanced AI-powered disease prediction and health analysis system. Get instant insights powered by Machine Learning, Deep Learning, and LLM technology.</p>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:2rem;">
+        <div style="flex:1;">
+            <div class="hero-badge">⚡ AI-Powered · 2026</div>
+            <h1>Smart <span>Health</span><br/>Companion</h1>
+            <p>Advanced AI-powered disease prediction and health analysis system. Get instant insights powered by Machine Learning, Deep Learning, and LLM technology.</p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px;flex-shrink:0;">
+            <div style="display:flex;gap:14px;">
+                <div class="hero-icon-box" style="animation:float 3s ease-in-out infinite;">🏥</div>
+                <div class="hero-icon-box" style="animation:float 3s ease-in-out infinite 0.3s;">👨‍⚕️</div>
+                <div class="hero-icon-box" style="animation:float 3s ease-in-out infinite 0.6s;">🩺</div>
+            </div>
+            <div style="display:flex;gap:14px;">
+                <div class="hero-icon-box" style="animation:float 3s ease-in-out infinite 0.9s;">🧬</div>
+                <div class="hero-icon-box" style="animation:float 3s ease-in-out infinite 1.2s;">💊</div>
+                <div class="hero-icon-box" style="animation:float 3s ease-in-out infinite 1.5s;">🔬</div>
+            </div>
+            <div style="display:flex;gap:14px;">
+                <div class="hero-icon-box" style="animation:float 3s ease-in-out infinite 1.8s;">🫀</div>
+                <div class="hero-icon-box" style="animation:float 3s ease-in-out infinite 2.1s;">🫁</div>
+                <div class="hero-icon-box" style="animation:float 3s ease-in-out infinite 2.4s;">🧠</div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="stats-grid">
@@ -80,7 +108,7 @@ st.markdown("""
     <div class="feature-card">
         <div class="feature-icon">🚨</div>
         <div class="feature-title">Emergency SOS</div>
-        <div class="feature-desc">Instant first aid instructions and emergency numbers for life-threatening situations.</div>
+        <div class="feature-desc">Instant first aid instructions and emergency numbers for 80+ countries worldwide.</div>
         <span class="feature-tag">Emergency · AI Powered</span>
     </div>
     <div class="feature-card">
@@ -92,7 +120,7 @@ st.markdown("""
     <div class="feature-card">
         <div class="feature-icon">🫁</div>
         <div class="feature-title">X-Ray Analysis</div>
-        <div class="feature-desc">CNN deep learning model detects pneumonia from chest X-ray images.</div>
+        <div class="feature-desc">CNN deep learning model detects pneumonia from chest X-ray images instantly.</div>
         <span class="feature-tag">CNN · 95% Accuracy</span>
     </div>
     <div class="feature-card">
@@ -112,6 +140,24 @@ st.markdown("""
         <div class="feature-title">Find a Doctor</div>
         <div class="feature-desc">AI recommends the best doctors and hospitals for your specific condition.</div>
         <span class="feature-tag">AI Directory</span>
+    </div>
+    <div class="feature-card">
+        <div class="feature-icon">⚖️</div>
+        <div class="feature-title">BMI & Vitals Calculator</div>
+        <div class="feature-desc">Calculate BMI, BMR, ideal weight and get AI-powered personalized health plan.</div>
+        <span class="feature-tag">AI Insights</span>
+    </div>
+    <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <div class="feature-title">Disease Risk Gauge</div>
+        <div class="feature-desc">Visual cardiovascular risk assessment with interactive gauge and AI prevention plan.</div>
+        <span class="feature-tag">Interactive</span>
+    </div>
+    <div class="feature-card">
+        <div class="feature-icon">📄</div>
+        <div class="feature-title">Patient Report PDF</div>
+        <div class="feature-desc">Generate professional AI-written medical reports with one-click PDF download.</div>
+        <span class="feature-tag">AI Generated</span>
     </div>
 </div>
 
