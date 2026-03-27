@@ -40,27 +40,11 @@ st.markdown("""
 .sidebar-brand-sub { font-size: 10px; color: #639922 !important; letter-spacing: 1px; text-transform: uppercase; margin-top: 3px; padding-left: 18px; }
 .sidebar-section { font-size: 10px; color: #97c459 !important; letter-spacing: 1px; text-transform: uppercase; font-weight: 600; padding: 10px 10px 4px 10px; }
 .sidebar-divider { border: none; border-top: 1px solid #e0ece0; margin: 4px 0; }
-
-[data-testid="stPageLink"] {
-    border-radius: 8px !important;
-    margin-bottom: 2px !important;
-    padding: 2px 4px !important;
-}
-[data-testid="stPageLink"]:hover {
-    background: #f5f9f0 !important;
-}
-[data-testid="stPageLink"] p {
-    font-size: 13px !important;
-    color: #5a6b5a !important;
-    font-weight: 400 !important;
-}
-[data-testid="stPageLink"][aria-current="page"] p {
-    color: #27500a !important;
-    font-weight: 600 !important;
-}
-[data-testid="stPageLink"][aria-current="page"] {
-    background: linear-gradient(135deg,#eaf3de,#d4edbe) !important;
-}
+[data-testid="stPageLink"] { border-radius: 8px !important; margin-bottom: 2px !important; padding: 2px 4px !important; }
+[data-testid="stPageLink"]:hover { background: #f5f9f0 !important; }
+[data-testid="stPageLink"] p { font-size: 13px !important; color: #5a6b5a !important; font-weight: 400 !important; }
+[data-testid="stPageLink"][aria-current="page"] p { color: #27500a !important; font-weight: 600 !important; }
+[data-testid="stPageLink"][aria-current="page"] { background: linear-gradient(135deg,#eaf3de,#d4edbe) !important; }
 </style>
 
 <div class="hero">
@@ -87,12 +71,18 @@ st.markdown("""
     </div>
     <div class="stat-card">
         <div class="stat-label">Features</div>
-        <div class="stat-value">9</div>
+        <div class="stat-value">11</div>
         <div class="stat-sub">AI-powered tools</div>
     </div>
 </div>
 
 <div class="feature-grid">
+    <div class="feature-card">
+        <div class="feature-icon">🚨</div>
+        <div class="feature-title">Emergency SOS</div>
+        <div class="feature-desc">Instant first aid instructions and emergency numbers for life-threatening situations.</div>
+        <span class="feature-tag">Emergency · AI Powered</span>
+    </div>
     <div class="feature-card">
         <div class="feature-icon">🫀</div>
         <div class="feature-title">Heart Disease Prediction</div>
@@ -112,27 +102,21 @@ st.markdown("""
         <span class="feature-tag">LLM · Groq Powered</span>
     </div>
     <div class="feature-card">
-        <div class="feature-icon">⚖️</div>
-        <div class="feature-title">BMI & Vitals Calculator</div>
-        <div class="feature-desc">Calculate BMI, BMR, ideal weight and get AI-powered health advice.</div>
-        <span class="feature-tag">AI Insights</span>
-    </div>
-    <div class="feature-card">
-        <div class="feature-icon">📊</div>
-        <div class="feature-title">Disease Risk Gauge</div>
-        <div class="feature-desc">Visual risk assessment with interactive gauge and AI recommendations.</div>
-        <span class="feature-tag">Interactive</span>
-    </div>
-    <div class="feature-card">
         <div class="feature-icon">🔍</div>
         <div class="feature-title">Symptom Checker</div>
         <div class="feature-desc">AI-powered symptom analysis with possible conditions and urgency levels.</div>
         <span class="feature-tag">AI Powered</span>
     </div>
+    <div class="feature-card">
+        <div class="feature-icon">👨‍⚕️</div>
+        <div class="feature-title">Find a Doctor</div>
+        <div class="feature-desc">AI recommends the best doctors and hospitals for your specific condition.</div>
+        <span class="feature-tag">AI Directory</span>
+    </div>
 </div>
 
 <div class="disclaimer">
-    ⚠️ This system is for educational purposes only. Always consult a qualified medical professional for proper diagnosis and treatment.
+    ⚠️ This system is for educational purposes only. Always consult a qualified medical professional for proper diagnosis and treatment. In emergencies call 999/911/112 immediately.
 </div>
 """, unsafe_allow_html=True)
 
@@ -147,26 +131,29 @@ st.sidebar.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+# Emergency section
+st.sidebar.markdown('<div class="sidebar-section" style="color:#c0392b !important;">🚨 Emergency</div>', unsafe_allow_html=True)
+st.sidebar.page_link("pages/0_🚨_Emergency.py", label="🚨 Emergency SOS")
+
 # Diagnostics section
- st.sidebar.markdown('<div class="sidebar-section">⚕ Diagnostics</div>', unsafe_allow_html=True)
-    st.sidebar.page_link("app.py", label="🏠 Home")
-    st.sidebar.page_link("pages/1_Heart_Disease.py", label="🫀 Heart Disease")
-    st.sidebar.page_link("pages/2_Xray_Analysis.py", label="🫁 X-Ray Analysis")
-    st.sidebar.page_link("pages/7_Symptom_Checker.py", label="🔍 Symptom Checker")
+st.sidebar.markdown('<hr class="sidebar-divider"/><div class="sidebar-section">⚕ Diagnostics</div>', unsafe_allow_html=True)
+st.sidebar.page_link("app.py", label="🏠 Home")
+st.sidebar.page_link("pages/1_Heart_Disease.py", label="🫀 Heart Disease")
+st.sidebar.page_link("pages/2_Xray_Analysis.py", label="🫁 X-Ray Analysis")
+st.sidebar.page_link("pages/7_Symptom_Checker.py", label="🔍 Symptom Checker")
 
-    st.sidebar.markdown('<hr class="sidebar-divider"/><div class="sidebar-section">🌍 Directory</div>', unsafe_allow_html=True)
-    st.sidebar.page_link("pages/10_Find_Doctor.py", label="👨‍⚕️ Find a Doctor")
+# Tools section
+st.sidebar.markdown('<hr class="sidebar-divider"/><div class="sidebar-section">🔧 Tools</div>', unsafe_allow_html=True)
+st.sidebar.page_link("pages/3_Health_Chatbot.py", label="🤖 AI Chatbot")
+st.sidebar.page_link("pages/4_BMI_Calculator.py", label="⚖️ BMI Calculator")
+st.sidebar.page_link("pages/6_Risk_Gauge.py", label="📊 Risk Gauge")
 
-    st.sidebar.markdown('<hr class="sidebar-divider"/><div class="sidebar-section">🔧 Tools</div>', unsafe_allow_html=True)
-    st.sidebar.page_link("pages/3_Health_Chatbot.py", label="🤖 AI Chatbot")
-    st.sidebar.page_link("pages/4_BMI_Calculator.py", label="⚖️ BMI Calculator")
-    st.sidebar.page_link("pages/6_Risk_Gauge.py", label="📊 Risk Gauge")
+# Records section
+st.sidebar.markdown('<hr class="sidebar-divider"/><div class="sidebar-section">📁 Records</div>', unsafe_allow_html=True)
+st.sidebar.page_link("pages/5_Health_Tips.py", label="💡 Health Tips")
+st.sidebar.page_link("pages/8_Medical_History.py", label="📋 Medical History")
+st.sidebar.page_link("pages/9_Patient_Report.py", label="📄 Patient Report")
 
-    st.sidebar.markdown('<hr class="sidebar-divider"/><div class="sidebar-section">📁 Records</div>', unsafe_allow_html=True)
-    st.sidebar.page_link("pages/5_Health_Tips.py", label="💡 Health Tips")
-    st.sidebar.page_link("pages/8_Medical_History.py", label="📋 Medical History")
-    st.sidebar.page_link("pages/9_Patient_Report.py", label="📄 Patient Report")
-
-    st.sidebar.markdown('<div class="sidebar-section" style="color:#c0392b !important;">🚨 Emergency</div>', unsafe_allow_html=True)
-    st.sidebar.page_link("pages/0_🚨_Emergency.py", label="🚨 Emergency SOS")
-    st.sidebar.markdown('<hr class="sidebar-divider"/>', unsafe_allow_html=True)
+# Directory section
+st.sidebar.markdown('<hr class="sidebar-divider"/><div class="sidebar-section">🌍 Directory</div>', unsafe_allow_html=True)
+st.sidebar.page_link("pages/10_Find_Doctor.py", label="👨‍⚕️ Find a Doctor")
