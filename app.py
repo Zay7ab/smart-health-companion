@@ -149,7 +149,7 @@ st.sidebar.markdown("""
 
 # Diagnostics section
 st.sidebar.markdown('<div class="sidebar-section">⚕ Diagnostics</div>', unsafe_allow_html=True)
-st.sidebar.page_link("App.py", label="🏠 Home")
+st.sidebar.page_link("app.py", label="🏠 Home")
 st.sidebar.page_link("pages/1_Heart_Disease.py", label="🫀 Heart Disease")
 st.sidebar.page_link("pages/2_Xray_Analysis.py", label="🫁 X-Ray Analysis")
 st.sidebar.page_link("pages/7_Symptom_Checker.py", label="🔍 Symptom Checker")
