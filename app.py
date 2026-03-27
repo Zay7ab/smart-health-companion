@@ -39,9 +39,28 @@ st.markdown("""
 .sidebar-brand-dot { width: 10px; height: 10px; border-radius: 50%; background: linear-gradient(135deg,#639922,#97c459); flex-shrink: 0; }
 .sidebar-brand-sub { font-size: 10px; color: #639922 !important; letter-spacing: 1px; text-transform: uppercase; margin-top: 3px; padding-left: 18px; }
 .sidebar-section { font-size: 10px; color: #97c459 !important; letter-spacing: 1px; text-transform: uppercase; font-weight: 600; padding: 10px 10px 4px 10px; }
-.sidebar-link { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 8px; margin-bottom: 2px; font-size: 13px; color: #5a6b5a !important; text-decoration: none !important; transition: all 0.15s; cursor: pointer; }
-.sidebar-link:hover { background: #f5f9f0 !important; color: #3b6d11 !important; }
 .sidebar-divider { border: none; border-top: 1px solid #e0ece0; margin: 4px 0; }
+
+[data-testid="stPageLink"] {
+    border-radius: 8px !important;
+    margin-bottom: 2px !important;
+    padding: 2px 4px !important;
+}
+[data-testid="stPageLink"]:hover {
+    background: #f5f9f0 !important;
+}
+[data-testid="stPageLink"] p {
+    font-size: 13px !important;
+    color: #5a6b5a !important;
+    font-weight: 400 !important;
+}
+[data-testid="stPageLink"][aria-current="page"] p {
+    color: #27500a !important;
+    font-weight: 600 !important;
+}
+[data-testid="stPageLink"][aria-current="page"] {
+    background: linear-gradient(135deg,#eaf3de,#d4edbe) !important;
+}
 </style>
 
 <div class="hero">
@@ -117,6 +136,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+# Sidebar branding
 st.sidebar.markdown("""
 <div class="sidebar-logo">
     <div class="sidebar-brand">
@@ -125,22 +145,23 @@ st.sidebar.markdown("""
     </div>
     <div class="sidebar-brand-sub">Smart Companion · 2026</div>
 </div>
-
-<div class="sidebar-section">⚕ Diagnostics</div>
-<a class="sidebar-link" href="/">🏠 Home</a>
-<a class="sidebar-link" href="/Heart_Disease">🫀 Heart Disease</a>
-<a class="sidebar-link" href="/Xray_Analysis">🫁 X-Ray Analysis</a>
-<a class="sidebar-link" href="/Symptom_Checker">🔍 Symptom Checker</a>
-
-<hr class="sidebar-divider"/>
-<div class="sidebar-section">🔧 Tools</div>
-<a class="sidebar-link" href="/Health_Chatbot">🤖 AI Chatbot</a>
-<a class="sidebar-link" href="/BMI_Calculator">⚖️ BMI Calculator</a>
-<a class="sidebar-link" href="/Risk_Gauge">📊 Risk Gauge</a>
-
-<hr class="sidebar-divider"/>
-<div class="sidebar-section">📁 Records</div>
-<a class="sidebar-link" href="/Health_Tips">💡 Health Tips</a>
-<a class="sidebar-link" href="/Medical_History">📋 Medical History</a>
-<a class="sidebar-link" href="/Patient_Report">📄 Patient Report</a>
 """, unsafe_allow_html=True)
+
+# Diagnostics section
+st.sidebar.markdown('<div class="sidebar-section">⚕ Diagnostics</div>', unsafe_allow_html=True)
+st.sidebar.page_link("App.py", label="🏠 Home")
+st.sidebar.page_link("pages/1_Heart_Disease.py", label="🫀 Heart Disease")
+st.sidebar.page_link("pages/2_Xray_Analysis.py", label="🫁 X-Ray Analysis")
+st.sidebar.page_link("pages/7_Symptom_Checker.py", label="🔍 Symptom Checker")
+
+# Tools section
+st.sidebar.markdown('<hr class="sidebar-divider"/><div class="sidebar-section">🔧 Tools</div>', unsafe_allow_html=True)
+st.sidebar.page_link("pages/3_Health_Chatbot.py", label="🤖 AI Chatbot")
+st.sidebar.page_link("pages/4_BMI_Calculator.py", label="⚖️ BMI Calculator")
+st.sidebar.page_link("pages/6_Risk_Gauge.py", label="📊 Risk Gauge")
+
+# Records section
+st.sidebar.markdown('<hr class="sidebar-divider"/><div class="sidebar-section">📁 Records</div>', unsafe_allow_html=True)
+st.sidebar.page_link("pages/5_Health_Tips.py", label="💡 Health Tips")
+st.sidebar.page_link("pages/8_Medical_History.py", label="📋 Medical History")
+st.sidebar.page_link("pages/9_Patient_Report.py", label="📄 Patient Report")
