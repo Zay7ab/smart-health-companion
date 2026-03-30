@@ -1,5 +1,5 @@
 import streamlit as st
-from groq import Groq
+import requests
 import pandas as pd
 from datetime import date
 import sys
@@ -8,6 +8,8 @@ from utils.sidebar import load_sidebar
 
 st.set_page_config(page_title="Medical History", page_icon="📋", layout="wide")
 load_sidebar()
+
+API_URL = st.secrets.get("API_BASE_URL", "https://zay7ab-health-ai-api.hf.space")
 
 st.markdown("""
 <style>
@@ -47,7 +49,7 @@ st.markdown("""
         <div class="topbar-title">📋 Medical History</div>
         <div class="topbar-sub">Track and analyze your medical records with AI</div>
     </div>
-    <div class="ai-badge"><span class="ai-dot"></span> Groq AI Active</div>
+    <div class="ai-badge"><span class="ai-dot"></span> FastAPI + Groq AI Active</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -91,7 +93,11 @@ col1, col2 = st.columns([1, 4])
 with col1:
     if st.button("➕ Add Record"):
         if condition:
-            st.session_state.medical_records.append({"Date": str(record_date), "Type": record_type, "Condition": condition, "Doctor": doctor, "Medications": medications, "Notes": notes})
+            st.session_state.medical_records.append({
+                "Date": str(record_date), "Type": record_type,
+                "Condition": condition, "Doctor": doctor,
+                "Medications": medications, "Notes": notes
+            })
             st.success("✅ Record added!")
             st.rerun()
         else:
@@ -101,7 +107,7 @@ if st.session_state.medical_records:
     st.markdown("### 📊 Medical History")
     col1, col2 = st.columns([3, 1])
     with col2:
-        filter_type = st.selectbox("Filter by type", ["All"] + list(type_colors.keys()))
+        filter_type = st.selectbox("Filter", ["All"] + list(type_colors.keys()))
 
     records_to_show = st.session_state.medical_records
     if filter_type != "All":
@@ -111,7 +117,7 @@ if st.session_state.medical_records:
         color, bg = type_colors.get(record["Type"], ("#5f5e5a", "#f1efe8"))
         st.markdown(f"""
         <div class="record-card">
-            <span style="background:{bg};color:{color};padding:4px 10px;border-radius:20px;font-size:10px;font-weight:600;text-transform:uppercase;flex-shrink:0;">{record["Type"]}</span>
+            <span style="background:{bg};color:{color};padding:4px 10px;border-radius:20px;font-size:10px;font-weight:600;flex-shrink:0;">{record["Type"]}</span>
             <div style="flex:1;">
                 <div style="font-size:14px;font-weight:600;color:#1a3a1a;">{record["Condition"]}</div>
                 <div style="font-size:11px;color:#7a8f7a;">📅 {record["Date"]} · 👨‍⚕️ {record["Doctor"] if record["Doctor"] else "Not specified"}</div>
@@ -122,23 +128,22 @@ if st.session_state.medical_records:
         """, unsafe_allow_html=True)
 
     if len(st.session_state.medical_records) >= 2:
-        if st.button("🤖 Get AI Health Pattern Analysis"):
-            with st.spinner("🤖 Analyzing your medical history..."):
+        if st.button("🤖 Get AI Pattern Analysis"):
+            with st.spinner("🤖 FastAPI analyzing history..."):
                 try:
-                    client = Groq(api_key=st.secrets["GROQ_API_KEY"])
-                    history_text = "\n".join([f"- {r['Date']}: {r['Type']} — {r['Condition']} (Medications: {r['Medications'] or 'None'})" for r in st.session_state.medical_records])
-                    prompt = f"""Analyze this patient's medical history:\n{history_text}\n
-                    Provide: 1) Key health patterns, 2) Potential risks, 3) Preventive measures, 4) Questions to ask doctor.
-                    End with: Always share your complete medical history with your doctor."""
-                    response = client.chat.completions.create(
-                        model="llama-3.3-70b-versatile",
-                        messages=[{"role": "user", "content": prompt}],
-                        max_tokens=400
+                    response = requests.post(
+                        f"{API_URL}/history/analyze",
+                        json={
+                            "records": st.session_state.medical_records,
+                            "api_key": st.secrets.get("GROQ_API_KEY", "")
+                        },
+                        timeout=30
                     )
+                    result = response.json()
                     st.markdown(f"""
                     <div class="ai-insight">
-                        <div class="ai-insight-header">🤖 AI Health Pattern Analysis</div>
-                        <div class="ai-insight-text">{response.choices[0].message.content.replace(chr(10), '<br>')}</div>
+                        <div class="ai-insight-header">🤖 AI Health Pattern Analysis (via FastAPI)</div>
+                        <div class="ai-insight-text">{result['analysis'].replace(chr(10), '<br>')}</div>
                     </div>
                     """, unsafe_allow_html=True)
                 except Exception as e:
@@ -156,4 +161,4 @@ else:
     </div>
     """, unsafe_allow_html=True)
 
-st.markdown('<div class="disclaimer">⚠️ For educational purposes only. Keep your medical records private and secure.</div>', unsafe_allow_html=True)
+st.markdown('<div class="disclaimer">⚠️ For educational purposes only.</div>', unsafe_allow_html=True)
