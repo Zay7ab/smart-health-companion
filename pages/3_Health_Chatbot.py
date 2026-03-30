@@ -15,7 +15,6 @@ st.markdown("""
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
 .stApp { background: #f0f4f0 !important; }
-
 .chat-topbar { background: white; border-radius: 16px; padding: 1rem 1.5rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 12px; border: 1px solid #e0ece0; }
 .chat-topbar-avatar { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg,#2d5a1a,#639922); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; }
 .chat-topbar-name { font-size: 16px; font-weight: 700; color: #1a3a1a; }
@@ -23,43 +22,30 @@ st.markdown("""
 .online-dot { width: 6px; height: 6px; border-radius: 50%; background: #639922; display: inline-block; animation: blink 2s infinite; }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
 .topbar-badge { background: #eaf3de; color: #27500a; font-size: 10px; font-weight: 600; padding: 4px 10px; border-radius: 20px; border: 1px solid #d4edbe; margin-left: auto; }
-
-.chat-container { background: white; border-radius: 16px; border: 1px solid #e0ece0; overflow: hidden; display: flex; flex-direction: column; height: 520px; }
-.chat-container-header { background: #f8faf8; border-bottom: 1px solid #e8f0e8; padding: 0.75rem 1.25rem; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
-.chat-container-title { font-size: 13px; font-weight: 600; color: #1a3a1a; }
-.chat-container-badge { font-size: 10px; color: #639922; background: #eaf3de; padding: 2px 8px; border-radius: 20px; }
-.chat-messages-scroll { flex: 1; overflow-y: auto; padding: 1.25rem; background: #fafcfa; scroll-behavior: smooth; }
-.chat-messages-scroll::-webkit-scrollbar { width: 4px; }
-.chat-messages-scroll::-webkit-scrollbar-track { background: transparent; }
-.chat-messages-scroll::-webkit-scrollbar-thumb { background: #d4edbe; border-radius: 4px; }
-
-.date-badge { text-align: center; margin-bottom: 12px; }
-.date-badge span { background: #f0f4f0; color: #7a8f7a; font-size: 11px; padding: 3px 12px; border-radius: 20px; }
-
 .msg-ai { display: flex; align-items: flex-end; gap: 8px; margin-bottom: 14px; }
 .msg-ai-ava { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg,#2d5a1a,#639922); display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
 .msg-ai-bubble { background: white; border: 1px solid #e8f0e8; border-radius: 4px 16px 16px 16px; padding: 10px 14px; max-width: 75%; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
 .msg-ai-text { font-size: 13px; color: #1a3a1a; line-height: 1.7; }
 .msg-time { font-size: 10px; color: #aab8aa; margin-top: 4px; }
-
 .msg-user { display: flex; justify-content: flex-end; align-items: flex-end; gap: 8px; margin-bottom: 14px; }
 .msg-user-ava { width: 32px; height: 32px; border-radius: 50%; background: #d4edbe; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
 .msg-user-bubble { background: linear-gradient(135deg,#2d5a1a,#4a8520); border-radius: 16px 4px 16px 16px; padding: 10px 14px; max-width: 75%; }
 .msg-user-text { font-size: 13px; color: white; line-height: 1.6; }
 .msg-time-user { font-size: 10px; color: rgba(255,255,255,0.55); margin-top: 4px; text-align: right; }
-
+.date-badge { text-align: center; margin-bottom: 12px; }
+.date-badge span { background: #f0f4f0; color: #7a8f7a; font-size: 11px; padding: 3px 12px; border-radius: 20px; }
+.chat-box-header { background: #f8faf8; border: 1px solid #e0ece0; border-bottom: none; border-radius: 16px 16px 0 0; padding: 0.75rem 1.25rem; display: flex; align-items: center; justify-content: space-between; }
+.chat-box-title { font-size: 13px; font-weight: 600; color: #1a3a1a; }
+.chat-box-badge { font-size: 10px; color: #639922; background: #eaf3de; padding: 2px 8px; border-radius: 20px; }
+.chat-box-footer { background: #f8faf8; border: 1px solid #e0ece0; border-top: none; border-radius: 0 0 16px 16px; padding: 0.5rem 1rem; }
 .symptom-card-wrap { background: white; border: 1.5px solid #e0ece0; border-radius: 12px; padding: 0.75rem 0.5rem; text-align: center; }
 .symptom-icon { font-size: 1.5rem; }
 .symptom-name { font-size: 11px; font-weight: 600; color: #1a3a1a; margin-top: 4px; }
-
-.section-label { font-size: 11px; font-weight: 600; color: #7a8f7a; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
-
+.section-label { font-size: 11px; font-weight: 600; color: #7a8f7a; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; margin-top: 1rem; }
 .cap-item { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid #f5f7f5; font-size: 12px; color: #3a4a3a; }
 .cap-item:last-child { border-bottom: none; }
 .cap-dot { width: 6px; height: 6px; border-radius: 50%; background: #639922; flex-shrink: 0; }
-
 .disclaimer { background: #fff8e1; border: 1px solid #f0c040; border-radius: 10px; padding: 0.75rem 1rem; font-size: 11px; color: #7a6000; margin-top: 1rem; }
-
 div[data-testid="stButton"] button { background: white !important; color: #27500a !important; border: 1.5px solid #d4edbe !important; border-radius: 20px !important; font-weight: 500 !important; font-size: 12px !important; padding: 0.4rem 1rem !important; }
 div[data-testid="stButton"] button:hover { background: #eaf3de !important; border-color: #97c459 !important; }
 label { color: #1a3a1a !important; }
@@ -91,51 +77,13 @@ def get_ai_response(user_input, history, language="English"):
     except:
         return "Connection error. Please try again."
 
-# Build messages HTML
-def build_messages_html():
-    html = '<div class="date-badge"><span>Today</span></div>'
-    html += f"""
-    <div class="msg-ai">
-        <div class="msg-ai-ava">🤖</div>
-        <div class="msg-ai-bubble">
-            <div class="msg-ai-text">Hi! I am <b>HealthAI Assistant</b>. I am here to help you with health questions, symptom analysis, medication information and wellness advice.<br/><br/>How can I help you today?</div>
-            <div class="msg-time">{now}</div>
-        </div>
-    </div>
-    """
-    for message in st.session_state.chat_history:
-        if message["role"] == "user":
-            html += f"""
-            <div class="msg-user">
-                <div class="msg-user-bubble">
-                    <div class="msg-user-text">{message["content"]}</div>
-                    <div class="msg-time-user">{now}</div>
-                </div>
-                <div class="msg-user-ava">👤</div>
-            </div>
-            """
-        else:
-            html += f"""
-            <div class="msg-ai">
-                <div class="msg-ai-ava">🤖</div>
-                <div class="msg-ai-bubble">
-                    <div class="msg-ai-text">{message["content"]}</div>
-                    <div class="msg-time">{now}</div>
-                </div>
-            </div>
-            """
-    return html
-
 # Topbar
 st.markdown(f"""
 <div class="chat-topbar">
     <div class="chat-topbar-avatar">🤖</div>
     <div>
         <div class="chat-topbar-name">HealthAI Assistant</div>
-        <div class="chat-topbar-status">
-            <span class="online-dot"></span>
-            Your Health Assistant · Online
-        </div>
+        <div class="chat-topbar-status"><span class="online-dot"></span> Your Health Assistant · Online</div>
     </div>
     <div class="topbar-badge">FastAPI + LLaMA 3.3</div>
 </div>
@@ -163,47 +111,75 @@ with col_side:
                 st.session_state.chat_history.append({"role": "assistant", "content": reply})
                 st.rerun()
 
-    st.markdown('<div style="margin-top:1rem;"><div class="section-label">✨ Capabilities</div></div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-label">✨ Capabilities</div>', unsafe_allow_html=True)
     for cap in ["Symptom analysis", "Drug information", "Mental health", "Nutrition advice", "Emergency guidance", "Lab results", "50+ languages"]:
         st.markdown(f'<div class="cap-item"><div class="cap-dot"></div>{cap}</div>', unsafe_allow_html=True)
 
-    st.markdown('<div style="margin-top:1rem;"><div class="section-label">🏷️ Topics</div></div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-label">🏷️ Topics</div>', unsafe_allow_html=True)
     topics_html = ""
     for t in ["Heart Health", "Diabetes", "Blood Pressure", "Mental Health", "Nutrition", "Sleep", "Pregnancy", "Allergies"]:
         topics_html += f'<span style="display:inline-block;background:#f0f4f0;border:1px solid #d4edbe;color:#3b6d11;border-radius:20px;padding:3px 9px;font-size:11px;margin:2px;">{t}</span>'
     st.markdown(f'<div style="line-height:2.2;">{topics_html}</div>', unsafe_allow_html=True)
 
-    st.markdown('<div style="margin-top:1rem;"><div class="section-label">🌐 Language</div></div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-label">🌐 Language</div>', unsafe_allow_html=True)
     language = st.selectbox("", ["English","Arabic","Urdu","Hindi","French","Spanish","German","Turkish","Persian","Malay"], label_visibility="collapsed")
 
 with col_main:
-    # Scrollable chat box
-    messages_html = build_messages_html()
-    st.markdown(f"""
-    <div class="chat-container">
-        <div class="chat-container-header">
-            <span class="chat-container-title">💬 Conversation</span>
-            <span class="chat-container-badge">FastAPI Powered</span>
-        </div>
-        <div class="chat-messages-scroll" id="chat-scroll">
-            {messages_html}
-        </div>
+    # Chat box header
+    st.markdown("""
+    <div class="chat-box-header">
+        <span class="chat-box-title">💬 Conversation</span>
+        <span class="chat-box-badge">FastAPI Powered</span>
     </div>
-    <script>
-        var chatScroll = document.getElementById('chat-scroll');
-        if(chatScroll) {{ chatScroll.scrollTop = chatScroll.scrollHeight; }}
-    </script>
     """, unsafe_allow_html=True)
 
-    # Symptom selector
-    st.markdown('<div style="margin-top:1rem;"><div class="section-label">🩺 Select Symptoms</div></div>', unsafe_allow_html=True)
+    # Scrollable chat using Streamlit container
+    chat_area = st.container(height=420, border=True)
 
+    with chat_area:
+        st.markdown('<div class="date-badge"><span>Today</span></div>', unsafe_allow_html=True)
+
+        # Welcome message
+        st.markdown(f"""
+        <div class="msg-ai">
+            <div class="msg-ai-ava">🤖</div>
+            <div class="msg-ai-bubble">
+                <div class="msg-ai-text">Hi! I am <b>HealthAI Assistant</b>. I am here to help with health questions, symptom analysis, medication information and wellness advice.<br/><br/>How can I help you today?</div>
+                <div class="msg-time">{now}</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # All messages
+        for message in st.session_state.chat_history:
+            if message["role"] == "user":
+                st.markdown(f"""
+                <div class="msg-user">
+                    <div class="msg-user-bubble">
+                        <div class="msg-user-text">{message["content"]}</div>
+                        <div class="msg-time-user">{now}</div>
+                    </div>
+                    <div class="msg-user-ava">👤</div>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.markdown(f"""
+                <div class="msg-ai">
+                    <div class="msg-ai-ava">🤖</div>
+                    <div class="msg-ai-bubble">
+                        <div class="msg-ai-text">{message["content"]}</div>
+                        <div class="msg-time">{now}</div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+
+    # Symptom selector
+    st.markdown('<div class="section-label">🩺 Select Symptoms</div>', unsafe_allow_html=True)
     symptoms_list = [
         ("🌡️", "Fever"), ("🤒", "Headache"), ("💔", "Chest Pain"),
         ("😮‍💨", "Breathless"), ("🤢", "Nausea"), ("😴", "Fatigue"),
         ("🩸", "Bleeding"), ("🦴", "Joint Pain"), ("👁️", "Blurred Vision"),
     ]
-
     selected_symptoms = []
     sym_cols = st.columns(9)
     for i, (icon, symptom) in enumerate(symptoms_list):
@@ -219,7 +195,7 @@ with col_main:
 
     if selected_symptoms:
         st.markdown(f"""
-        <div style="background:#eaf3de;border:1px solid #97c459;border-radius:10px;padding:0.6rem 1rem;margin-top:0.75rem;font-size:12px;color:#27500a;">
+        <div style="background:#eaf3de;border:1px solid #97c459;border-radius:10px;padding:0.6rem 1rem;margin-top:0.5rem;font-size:12px;color:#27500a;">
             <b>Selected:</b> {', '.join(selected_symptoms)}
         </div>
         """, unsafe_allow_html=True)
