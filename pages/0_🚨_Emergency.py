@@ -1,11 +1,13 @@
 import streamlit as st
-from groq import Groq
+import requests
 import sys
 sys.path.append('.')
 from utils.sidebar import load_sidebar
 
 st.set_page_config(page_title="Emergency SOS", page_icon="🚨", layout="wide")
 load_sidebar()
+
+API_URL = st.secrets.get("API_BASE_URL", "https://zay7ab-health-ai-api.hf.space")
 
 st.markdown("""
 <style>
@@ -20,7 +22,6 @@ st.markdown("""
 .country-flag { font-size: 1.5rem; flex-shrink: 0; }
 .country-name { font-size: 13px; font-weight: 700; color: #1a3a1a; margin-bottom: 2px; }
 .country-numbers { font-size: 12px; color: #5a6b5a; }
-.country-highlight { color: #c0392b; font-weight: 700; }
 .warning-signs { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; margin-bottom: 1.5rem; }
 .warning-card { background: white; border: 1px solid #ffb3b3; border-radius: 12px; padding: 1rem; display: flex; align-items: center; gap: 10px; }
 .warning-icon { font-size: 1.5rem; flex-shrink: 0; }
@@ -40,7 +41,6 @@ st.markdown("""
 .step-text { font-size: 12px; color: rgba(255,255,255,0.9); line-height: 1.5; }
 .disclaimer { background: #fff8e1; border: 1px solid #f0c040; border-radius: 10px; padding: 0.75rem 1rem; font-size: 11px; color: #7a6000; margin-top: 1rem; }
 div[data-testid="stButton"] button { background: linear-gradient(135deg,#7f0000,#c0392b) !important; color: white !important; border: none !important; border-radius: 8px !important; font-weight: 600 !important; font-size: 13px !important; padding: 0.6rem 1.5rem !important; }
-div[data-testid="stButton"] button:hover { background: linear-gradient(135deg,#5c0000,#a93226) !important; }
 label { color: #1a3a1a !important; }
 p { color: #1a3a1a !important; }
 </style>
@@ -50,7 +50,7 @@ st.markdown("""
 <div class="emergency-hero">
     <div class="emergency-badge">🚨 EMERGENCY GUIDE</div>
     <h1>🚨 Emergency SOS & First Aid</h1>
-    <p>Immediate guidance for medical emergencies worldwide. Find emergency numbers for your country and get instant AI-powered first aid instructions. Always call emergency services first!</p>
+    <p>Immediate guidance for medical emergencies worldwide. Find emergency numbers for your country and get instant AI-powered first aid instructions via FastAPI.</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -62,28 +62,20 @@ tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
 ])
 
 with tab1:
-    st.markdown("#### Middle East & North Africa")
     countries_me = [
-        ("🇦🇪", "UAE", "Police: 999 | Ambulance: 998 | Fire: 997 | Coast Guard: 996"),
-        ("🇸🇦", "Saudi Arabia", "Police: 999 | Ambulance: 911 | Fire: 998 | Traffic: 993"),
-        ("🇶🇦", "Qatar", "Police: 999 | Ambulance: 999 | Fire: 999 | All: 999"),
-        ("🇰🇼", "Kuwait", "Police: 112 | Ambulance: 112 | Fire: 112 | All: 112"),
-        ("🇧🇭", "Bahrain", "Police: 999 | Ambulance: 999 | Fire: 999 | All: 999"),
-        ("🇴🇲", "Oman", "Police: 9999 | Ambulance: 9999 | Fire: 9999 | All: 9999"),
-        ("🇯🇴", "Jordan", "Police: 911 | Ambulance: 911 | Fire: 911 | All: 911"),
-        ("🇱🇧", "Lebanon", "Police: 112 | Ambulance: 140 | Fire: 175 | Red Cross: 140"),
-        ("🇪🇬", "Egypt", "Police: 122 | Ambulance: 123 | Fire: 180 | Tourism Police: 126"),
-        ("🇮🇶", "Iraq", "Police: 104 | Ambulance: 115 | Fire: 115"),
-        ("🇾🇪", "Yemen", "Police: 194 | Ambulance: 191 | Fire: 191"),
-        ("🇸🇾", "Syria", "Police: 112 | Ambulance: 110 | Fire: 113"),
-        ("🇮🇱", "Israel", "Police: 100 | Ambulance: 101 | Fire: 102 | All: 112"),
-        ("🇵🇸", "Palestine", "Police: 100 | Ambulance: 101 | Fire: 102"),
-        ("🇮🇷", "Iran", "Police: 110 | Ambulance: 115 | Fire: 125 | Emergency: 115"),
-        ("🇹🇷", "Turkey", "Police: 155 | Ambulance: 112 | Fire: 110 | Emergency: 112"),
-        ("🇲🇦", "Morocco", "Police: 19 | Ambulance: 150 | Fire: 15 | Gendarmerie: 177"),
-        ("🇹🇳", "Tunisia", "Police: 197 | Ambulance: 190 | Fire: 198 | National Guard: 193"),
-        ("🇱🇾", "Libya", "Police: 1515 | Ambulance: 1515 | Fire: 1515"),
-        ("🇩🇿", "Algeria", "Police: 17 | Ambulance: 14 | Fire: 14 | Emergency: 14"),
+        ("🇦🇪", "UAE", "Police: 999 | Ambulance: 998 | Fire: 997"),
+        ("🇸🇦", "Saudi Arabia", "Police: 999 | Ambulance: 911 | Fire: 998"),
+        ("🇶🇦", "Qatar", "All: 999"),
+        ("🇰🇼", "Kuwait", "All: 112"),
+        ("🇧🇭", "Bahrain", "All: 999"),
+        ("🇴🇲", "Oman", "All: 9999"),
+        ("🇯🇴", "Jordan", "All: 911"),
+        ("🇱🇧", "Lebanon", "Police: 112 | Ambulance: 140 | Fire: 175"),
+        ("🇪🇬", "Egypt", "Police: 122 | Ambulance: 123 | Fire: 180"),
+        ("🇮🇷", "Iran", "Police: 110 | Ambulance: 115 | Fire: 125"),
+        ("🇹🇷", "Turkey", "Police: 155 | Ambulance: 112 | Fire: 110"),
+        ("🇲🇦", "Morocco", "Police: 19 | Ambulance: 150 | Fire: 15"),
+        ("🇵🇰", "Pakistan", "Police: 15 | Ambulance: 1122 | Rescue: 1122"),
     ]
     for flag, country, numbers in countries_me:
         st.markdown(f"""
@@ -97,28 +89,19 @@ with tab1:
         """, unsafe_allow_html=True)
 
 with tab2:
-    st.markdown("#### Europe")
     countries_eu = [
-        ("🇬🇧", "United Kingdom", "Police: 999 | Ambulance: 999 | Fire: 999 | All: 112"),
-        ("🇩🇪", "Germany", "Police: 110 | Ambulance: 112 | Fire: 112 | All: 112"),
-        ("🇫🇷", "France", "Police: 17 | Ambulance: 15 | Fire: 18 | All: 112"),
-        ("🇮🇹", "Italy", "Police: 113 | Ambulance: 118 | Fire: 115 | All: 112"),
-        ("🇪🇸", "Spain", "Police: 091 | Ambulance: 112 | Fire: 080 | All: 112"),
-        ("🇵🇹", "Portugal", "Police: 112 | Ambulance: 112 | Fire: 112 | All: 112"),
-        ("🇳🇱", "Netherlands", "Police: 112 | Ambulance: 112 | Fire: 112 | All: 112"),
-        ("🇧🇪", "Belgium", "Police: 101 | Ambulance: 100 | Fire: 100 | All: 112"),
-        ("🇨🇭", "Switzerland", "Police: 117 | Ambulance: 144 | Fire: 118 | All: 112"),
-        ("🇦🇹", "Austria", "Police: 133 | Ambulance: 144 | Fire: 122 | All: 112"),
-        ("🇸🇪", "Sweden", "Police: 112 | Ambulance: 112 | Fire: 112 | All: 112"),
-        ("🇳🇴", "Norway", "Police: 112 | Ambulance: 113 | Fire: 110 | All: 112"),
-        ("🇩🇰", "Denmark", "Police: 112 | Ambulance: 112 | Fire: 112 | All: 112"),
-        ("🇫🇮", "Finland", "Police: 112 | Ambulance: 112 | Fire: 112 | All: 112"),
-        ("🇵🇱", "Poland", "Police: 997 | Ambulance: 999 | Fire: 998 | All: 112"),
-        ("🇷🇺", "Russia", "Police: 102 | Ambulance: 103 | Fire: 101 | All: 112"),
-        ("🇺🇦", "Ukraine", "Police: 102 | Ambulance: 103 | Fire: 101 | All: 112"),
-        ("🇬🇷", "Greece", "Police: 100 | Ambulance: 166 | Fire: 199 | All: 112"),
-        ("🇷🇴", "Romania", "Police: 112 | Ambulance: 112 | Fire: 112 | All: 112"),
-        ("🇨🇿", "Czech Republic", "Police: 158 | Ambulance: 155 | Fire: 150 | All: 112"),
+        ("🇬🇧", "United Kingdom", "Police: 999 | All: 112"),
+        ("🇩🇪", "Germany", "Police: 110 | Ambulance: 112"),
+        ("🇫🇷", "France", "Police: 17 | Ambulance: 15 | Fire: 18"),
+        ("🇮🇹", "Italy", "Police: 113 | Ambulance: 118 | Fire: 115"),
+        ("🇪🇸", "Spain", "Police: 091 | All: 112"),
+        ("🇳🇱", "Netherlands", "All: 112"),
+        ("🇧🇪", "Belgium", "Police: 101 | Ambulance: 100"),
+        ("🇨🇭", "Switzerland", "Police: 117 | Ambulance: 144 | Fire: 118"),
+        ("🇸🇪", "Sweden", "All: 112"),
+        ("🇵🇱", "Poland", "Police: 997 | Ambulance: 999 | Fire: 998"),
+        ("🇷🇺", "Russia", "Police: 102 | Ambulance: 103 | Fire: 101"),
+        ("🇬🇷", "Greece", "Police: 100 | Ambulance: 166 | Fire: 199"),
     ]
     for flag, country, numbers in countries_eu:
         st.markdown(f"""
@@ -132,26 +115,15 @@ with tab2:
         """, unsafe_allow_html=True)
 
 with tab3:
-    st.markdown("#### Americas")
     countries_am = [
-        ("🇺🇸", "United States", "Police: 911 | Ambulance: 911 | Fire: 911 | All: 911"),
-        ("🇨🇦", "Canada", "Police: 911 | Ambulance: 911 | Fire: 911 | All: 911"),
-        ("🇲🇽", "Mexico", "Police: 911 | Ambulance: 911 | Fire: 911 | All: 911"),
-        ("🇧🇷", "Brazil", "Police: 190 | Ambulance: 192 | Fire: 193 | Civil Defense: 199"),
-        ("🇦🇷", "Argentina", "Police: 911 | Ambulance: 107 | Fire: 100 | All: 911"),
-        ("🇨🇴", "Colombia", "Police: 112 | Ambulance: 132 | Fire: 119 | All: 123"),
-        ("🇨🇱", "Chile", "Police: 133 | Ambulance: 131 | Fire: 132 | All: 131"),
-        ("🇵🇪", "Peru", "Police: 105 | Ambulance: 117 | Fire: 116 | All: 105"),
-        ("🇻🇪", "Venezuela", "Police: 171 | Ambulance: 171 | Fire: 171 | All: 171"),
-        ("🇨🇺", "Cuba", "Police: 106 | Ambulance: 104 | Fire: 105 | All: 104"),
-        ("🇯🇲", "Jamaica", "Police: 119 | Ambulance: 110 | Fire: 110 | All: 119"),
-        ("🇵🇦", "Panama", "Police: 104 | Ambulance: 911 | Fire: 103 | All: 911"),
-        ("🇨🇷", "Costa Rica", "Police: 911 | Ambulance: 911 | Fire: 911 | All: 911"),
-        ("🇬🇹", "Guatemala", "Police: 110 | Ambulance: 122 | Fire: 122 | All: 110"),
-        ("🇧🇴", "Bolivia", "Police: 110 | Ambulance: 118 | Fire: 119 | All: 110"),
-        ("🇪🇨", "Ecuador", "Police: 101 | Ambulance: 131 | Fire: 102 | All: 911"),
-        ("🇺🇾", "Uruguay", "Police: 911 | Ambulance: 105 | Fire: 104 | All: 911"),
-        ("🇵🇾", "Paraguay", "Police: 911 | Ambulance: 911 | Fire: 911 | All: 911"),
+        ("🇺🇸", "United States", "All: 911"),
+        ("🇨🇦", "Canada", "All: 911"),
+        ("🇲🇽", "Mexico", "All: 911"),
+        ("🇧🇷", "Brazil", "Police: 190 | Ambulance: 192 | Fire: 193"),
+        ("🇦🇷", "Argentina", "Police: 911 | Ambulance: 107 | Fire: 100"),
+        ("🇨🇴", "Colombia", "All: 123"),
+        ("🇨🇱", "Chile", "Police: 133 | Ambulance: 131 | Fire: 132"),
+        ("🇵🇪", "Peru", "Police: 105 | Ambulance: 117 | Fire: 116"),
     ]
     for flag, country, numbers in countries_am:
         st.markdown(f"""
@@ -165,28 +137,20 @@ with tab3:
         """, unsafe_allow_html=True)
 
 with tab4:
-    st.markdown("#### Asia Pacific")
     countries_ap = [
-        ("🇵🇰", "Pakistan", "Police: 15 | Ambulance: 1122 | Fire: 16 | Rescue: 1122"),
-        ("🇮🇳", "India", "Police: 100 | Ambulance: 108 | Fire: 101 | All: 112"),
-        ("🇧🇩", "Bangladesh", "Police: 999 | Ambulance: 999 | Fire: 999 | All: 999"),
-        ("🇱🇰", "Sri Lanka", "Police: 119 | Ambulance: 110 | Fire: 111 | All: 119"),
-        ("🇳🇵", "Nepal", "Police: 100 | Ambulance: 102 | Fire: 101 | All: 100"),
-        ("🇨🇳", "China", "Police: 110 | Ambulance: 120 | Fire: 119 | Traffic: 122"),
-        ("🇯🇵", "Japan", "Police: 110 | Ambulance: 119 | Fire: 119 | All: 110"),
-        ("🇰🇷", "South Korea", "Police: 112 | Ambulance: 119 | Fire: 119 | All: 119"),
-        ("🇦🇺", "Australia", "Police: 000 | Ambulance: 000 | Fire: 000 | All: 000"),
-        ("🇳🇿", "New Zealand", "Police: 111 | Ambulance: 111 | Fire: 111 | All: 111"),
-        ("🇸🇬", "Singapore", "Police: 999 | Ambulance: 995 | Fire: 995 | All: 995"),
-        ("🇲🇾", "Malaysia", "Police: 999 | Ambulance: 999 | Fire: 994 | All: 999"),
-        ("🇮🇩", "Indonesia", "Police: 110 | Ambulance: 118 | Fire: 113 | All: 112"),
-        ("🇵🇭", "Philippines", "Police: 911 | Ambulance: 911 | Fire: 911 | All: 911"),
-        ("🇹🇭", "Thailand", "Police: 191 | Ambulance: 1669 | Fire: 199 | Tourist: 1155"),
-        ("🇻🇳", "Vietnam", "Police: 113 | Ambulance: 115 | Fire: 114 | All: 112"),
-        ("🇲🇻", "Maldives", "Police: 119 | Ambulance: 102 | Fire: 118 | All: 119"),
-        ("🇦🇫", "Afghanistan", "Police: 119 | Ambulance: 112 | Fire: 119 | All: 112"),
-        ("🇰🇿", "Kazakhstan", "Police: 102 | Ambulance: 103 | Fire: 101 | All: 112"),
-        ("🇺🇿", "Uzbekistan", "Police: 102 | Ambulance: 103 | Fire: 101 | All: 112"),
+        ("🇮🇳", "India", "Police: 100 | Ambulance: 108 | All: 112"),
+        ("🇧🇩", "Bangladesh", "All: 999"),
+        ("🇱🇰", "Sri Lanka", "Police: 119 | Ambulance: 110"),
+        ("🇨🇳", "China", "Police: 110 | Ambulance: 120 | Fire: 119"),
+        ("🇯🇵", "Japan", "Police: 110 | Ambulance: 119"),
+        ("🇰🇷", "South Korea", "Police: 112 | Ambulance: 119"),
+        ("🇦🇺", "Australia", "All: 000"),
+        ("🇳🇿", "New Zealand", "All: 111"),
+        ("🇸🇬", "Singapore", "Police: 999 | Ambulance: 995"),
+        ("🇲🇾", "Malaysia", "All: 999"),
+        ("🇮🇩", "Indonesia", "Police: 110 | Ambulance: 118"),
+        ("🇵🇭", "Philippines", "All: 911"),
+        ("🇹🇭", "Thailand", "Police: 191 | Ambulance: 1669"),
     ]
     for flag, country, numbers in countries_ap:
         st.markdown(f"""
@@ -200,23 +164,15 @@ with tab4:
         """, unsafe_allow_html=True)
 
 with tab5:
-    st.markdown("#### Africa")
     countries_af = [
-        ("🇿🇦", "South Africa", "Police: 10111 | Ambulance: 10177 | Fire: 10177 | All: 112"),
-        ("🇳🇬", "Nigeria", "Police: 199 | Ambulance: 199 | Fire: 199 | All: 199"),
-        ("🇰🇪", "Kenya", "Police: 999 | Ambulance: 999 | Fire: 999 | All: 999"),
-        ("🇬🇭", "Ghana", "Police: 191 | Ambulance: 193 | Fire: 192 | All: 112"),
-        ("🇪🇹", "Ethiopia", "Police: 991 | Ambulance: 907 | Fire: 939 | All: 907"),
-        ("🇹🇿", "Tanzania", "Police: 112 | Ambulance: 112 | Fire: 112 | All: 112"),
-        ("🇺🇬", "Uganda", "Police: 999 | Ambulance: 999 | Fire: 999 | All: 999"),
-        ("🇷🇼", "Rwanda", "Police: 112 | Ambulance: 912 | Fire: 112 | All: 112"),
-        ("🇿🇲", "Zambia", "Police: 999 | Ambulance: 991 | Fire: 993 | All: 999"),
-        ("🇿🇼", "Zimbabwe", "Police: 999 | Ambulance: 994 | Fire: 993 | All: 999"),
-        ("🇸🇳", "Senegal", "Police: 17 | Ambulance: 15 | Fire: 18 | All: 112"),
-        ("🇨🇮", "Ivory Coast", "Police: 110 | Ambulance: 185 | Fire: 180 | All: 110"),
-        ("🇨🇲", "Cameroon", "Police: 117 | Ambulance: 119 | Fire: 118 | All: 117"),
-        ("🇦🇴", "Angola", "Police: 113 | Ambulance: 112 | Fire: 115 | All: 113"),
-        ("🇲🇿", "Mozambique", "Police: 119 | Ambulance: 117 | Fire: 198 | All: 119"),
+        ("🇿🇦", "South Africa", "Police: 10111 | Ambulance: 10177 | All: 112"),
+        ("🇳🇬", "Nigeria", "All: 199"),
+        ("🇰🇪", "Kenya", "All: 999"),
+        ("🇬🇭", "Ghana", "Police: 191 | Ambulance: 193 | Fire: 192"),
+        ("🇪🇹", "Ethiopia", "Police: 991 | Ambulance: 907"),
+        ("🇹🇿", "Tanzania", "All: 112"),
+        ("🇷🇼", "Rwanda", "Police: 112 | Ambulance: 912"),
+        ("🇿🇲", "Zambia", "Police: 999 | Ambulance: 991"),
     ]
     for flag, country, numbers in countries_af:
         st.markdown(f"""
@@ -230,183 +186,102 @@ with tab5:
         """, unsafe_allow_html=True)
 
 with tab6:
-    st.markdown("#### Universal Emergency Numbers")
     st.markdown("""
     <div class="country-card" style="border-color:#c0392b;background:#fff0f0;">
         <div class="country-flag">🌐</div>
         <div>
             <div class="country-name" style="color:#c0392b;">Universal Emergency Number</div>
-            <div class="country-numbers"><span class="country-highlight">112</span> — Works in most countries worldwide, especially in Europe and when roaming</div>
+            <div class="country-numbers"><b>112</b> — Works in most countries worldwide</div>
         </div>
     </div>
-    <div class="country-card" style="border-color:#c0392b;background:#fff0f0;">
+    <div class="country-card">
         <div class="country-flag">📱</div>
         <div>
-            <div class="country-name" style="color:#c0392b;">Mobile Emergency</div>
-            <div class="country-numbers"><span class="country-highlight">112</span> — Works even without SIM card or network signal on most phones</div>
-        </div>
-    </div>
-    <div class="country-card">
-        <div class="country-flag">✈️</div>
-        <div>
-            <div class="country-name">When Travelling</div>
-            <div class="country-numbers">Save local emergency number before travelling. 112 works in 80+ countries as backup</div>
-        </div>
-    </div>
-    <div class="country-card">
-        <div class="country-flag">🏨</div>
-        <div>
-            <div class="country-name">Hotel Emergency</div>
-            <div class="country-numbers">Call hotel front desk first — they can connect you to local emergency services faster</div>
+            <div class="country-name">Mobile Emergency</div>
+            <div class="country-numbers">112 works even without SIM card on most phones</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
 # Warning signs
-st.markdown("### ⚠️ Call Emergency Services Immediately If You See:")
+st.markdown("### ⚠️ Call Emergency Services Immediately If:")
 st.markdown("""
 <div class="warning-signs">
-    <div class="warning-card">
-        <div class="warning-icon">💔</div>
-        <div>
-            <div class="warning-text">Chest pain or pressure</div>
-            <div class="warning-sub">Could be a heart attack — every second counts</div>
-        </div>
-    </div>
-    <div class="warning-card">
-        <div class="warning-icon">🫁</div>
-        <div>
-            <div class="warning-text">Difficulty breathing</div>
-            <div class="warning-sub">Severe shortness of breath or choking</div>
-        </div>
-    </div>
-    <div class="warning-card">
-        <div class="warning-icon">🧠</div>
-        <div>
-            <div class="warning-text">Stroke signs (FAST)</div>
-            <div class="warning-sub">Face drooping, Arm weakness, Speech difficulty, Time to call</div>
-        </div>
-    </div>
-    <div class="warning-card">
-        <div class="warning-icon">🩸</div>
-        <div>
-            <div class="warning-text">Severe bleeding</div>
-            <div class="warning-sub">Uncontrolled bleeding from any wound</div>
-        </div>
-    </div>
-    <div class="warning-card">
-        <div class="warning-icon">😵</div>
-        <div>
-            <div class="warning-text">Loss of consciousness</div>
-            <div class="warning-sub">Person is unresponsive or unconscious</div>
-        </div>
-    </div>
-    <div class="warning-card">
-        <div class="warning-icon">🤢</div>
-        <div>
-            <div class="warning-text">Severe allergic reaction</div>
-            <div class="warning-sub">Swelling of throat, difficulty swallowing</div>
-        </div>
-    </div>
-    <div class="warning-card">
-        <div class="warning-icon">🔥</div>
-        <div>
-            <div class="warning-text">Severe burns</div>
-            <div class="warning-sub">Large area or deep burns requiring immediate care</div>
-        </div>
-    </div>
-    <div class="warning-card">
-        <div class="warning-icon">👶</div>
-        <div>
-            <div class="warning-text">Child not breathing</div>
-            <div class="warning-sub">Any infant or child not breathing or unresponsive</div>
-        </div>
-    </div>
+    <div class="warning-card"><div class="warning-icon">💔</div><div><div class="warning-text">Chest pain or pressure</div><div class="warning-sub">Could be heart attack — every second counts</div></div></div>
+    <div class="warning-card"><div class="warning-icon">🫁</div><div><div class="warning-text">Difficulty breathing</div><div class="warning-sub">Severe shortness of breath or choking</div></div></div>
+    <div class="warning-card"><div class="warning-icon">🧠</div><div><div class="warning-text">Stroke signs (FAST)</div><div class="warning-sub">Face drooping, Arm weakness, Speech difficulty</div></div></div>
+    <div class="warning-card"><div class="warning-icon">🩸</div><div><div class="warning-text">Severe bleeding</div><div class="warning-sub">Uncontrolled bleeding from any wound</div></div></div>
+    <div class="warning-card"><div class="warning-icon">😵</div><div><div class="warning-text">Loss of consciousness</div><div class="warning-sub">Person is unresponsive or unconscious</div></div></div>
+    <div class="warning-card"><div class="warning-icon">🤢</div><div><div class="warning-text">Severe allergic reaction</div><div class="warning-sub">Swelling of throat, difficulty swallowing</div></div></div>
 </div>
 """, unsafe_allow_html=True)
 
 # AI First Aid
-st.markdown('<div class="form-card"><div class="form-header"><h2>🤖 AI Emergency First Aid Guide</h2><span class="form-tag">Instant Help</span></div><div class="form-body">', unsafe_allow_html=True)
+st.markdown('<div class="form-card"><div class="form-header"><h2>🤖 AI Emergency First Aid Guide</h2><span class="form-tag">FastAPI Powered</span></div><div class="form-body">', unsafe_allow_html=True)
 
 col1, col2 = st.columns(2)
 with col1:
     emergency_type = st.selectbox("Emergency Type", [
         "Heart Attack", "Stroke", "Choking", "Severe Bleeding",
-        "Burns", "Fracture / Broken Bone", "Allergic Reaction / Anaphylaxis",
+        "Burns", "Fracture / Broken Bone", "Allergic Reaction",
         "Seizure / Epilepsy", "Drowning", "Electric Shock",
         "Poisoning / Overdose", "Diabetic Emergency", "Asthma Attack",
-        "Head Injury", "Spinal Injury", "Eye Injury", "Tooth Knocked Out",
-        "Snake / Animal Bite", "Heat Stroke", "Hypothermia / Frostbite",
-        "Loss of Consciousness", "Panic Attack", "Childbirth Emergency",
-        "Other Emergency"
+        "Head Injury", "Loss of Consciousness", "Snake / Animal Bite",
+        "Heat Stroke", "Hypothermia", "Panic Attack", "Other Emergency"
     ])
-    country = st.text_input("Your Country", placeholder="e.g. UAE, UK, USA, Pakistan...")
+    country = st.text_input("Your Country", placeholder="e.g. UAE, UK, Pakistan...")
 with col2:
     patient_age = st.selectbox("Patient Age Group", ["Adult (18+)", "Child (5-17)", "Infant (0-4)", "Elderly (65+)"])
-    conscious = st.selectbox("Is the patient conscious?", ["Yes - Awake and responsive", "Semi-conscious - Drowsy", "No - Unconscious"])
+    conscious = st.selectbox("Is patient conscious?", ["Yes - Awake", "Semi-conscious", "No - Unconscious"])
 
-situation = st.text_area("Describe the emergency:", placeholder="e.g. Person collapsed, not breathing, pale skin, happened 2 minutes ago...", height=80)
+situation = st.text_area("Describe the emergency:", placeholder="e.g. Person collapsed, not breathing...", height=80)
 st.markdown('</div></div>', unsafe_allow_html=True)
 
 if st.button("🚨 GET IMMEDIATE FIRST AID INSTRUCTIONS"):
-    with st.spinner("🤖 Getting emergency instructions..."):
+    with st.spinner("🤖 FastAPI getting emergency instructions..."):
         try:
-            client = Groq(api_key=st.secrets["GROQ_API_KEY"])
-            prompt = f"""
-            MEDICAL EMERGENCY - Provide immediate first aid instructions.
-
-            Emergency: {emergency_type}
-            Country: {country if country else 'Not specified'}
-            Patient: {patient_age}, {conscious}
-            Situation: {situation if situation else 'Not described'}
-
-            Provide IMMEDIATE instructions:
-
-            ⚠️ CALL EMERGENCY SERVICES: State the emergency number for {country if country else 'their country'} and if they should call NOW
-
-            STEP-BY-STEP FIRST AID (1-8 steps):
-            Clear numbered steps a non-medical person can follow RIGHT NOW.
-
-            DO NOT DO:
-            3-4 things to absolutely avoid
-
-            WHAT TO TELL DISPATCHER:
-            Exact words to say when calling emergency services
-
-            WHEN TO STOP AND WAIT:
-            When to stop first aid and just wait for ambulance
-
-            Be clear, calm and life-saving. Lives depend on this.
-            End with: This is first aid guidance only. Professional medical care is essential.
-            """
-            response = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=800,
-                temperature=0.3
+            response = requests.post(
+                f"{API_URL}/emergency/firstaid",
+                json={
+                    "emergency_type": emergency_type,
+                    "country": country,
+                    "patient_age": patient_age,
+                    "conscious": conscious,
+                    "situation": situation,
+                    "api_key": st.secrets.get("GROQ_API_KEY", "")
+                },
+                timeout=30
             )
-            st.markdown(f"""
-            <div class="ai-insight">
-                <div class="ai-insight-header">🚨 Emergency First Aid — {emergency_type}</div>
-                <div class="ai-insight-text">{response.choices[0].message.content.replace(chr(10), '<br>')}</div>
-            </div>
-            """, unsafe_allow_html=True)
+            result = response.json()
+
+            if "error" in result:
+                st.error(f"API Error: {result['error']}")
+            else:
+                st.markdown(f"""
+                <div class="ai-insight">
+                    <div class="ai-insight-header">🚨 Emergency First Aid via FastAPI — {emergency_type}</div>
+                    <div class="ai-insight-text">{result['instructions'].replace(chr(10), '<br>')}</div>
+                </div>
+                """, unsafe_allow_html=True)
+
+        except requests.exceptions.Timeout:
+            st.error("⏱️ API timeout — please try again")
         except Exception as e:
             st.error(f"Error: {e}")
 
 # CPR Guide
-st.markdown("### 🫀 Quick CPR & First Aid Reference")
+st.markdown("### 🫀 Quick CPR Reference")
 col1, col2 = st.columns(2)
 
 with col1:
     st.markdown("""
     <div class="steps-card">
         <div style="font-size:13px;font-weight:700;color:white;margin-bottom:1rem;text-transform:uppercase;letter-spacing:1px;">🫀 CPR Steps (Adult)</div>
-        <div class="step-item"><div class="step-num">1</div><div class="step-text">Check scene is safe. Tap shoulders — shout "Are you okay?"</div></div>
-        <div class="step-item"><div class="step-num">2</div><div class="step-text">Call emergency services immediately or ask someone to call</div></div>
-        <div class="step-item"><div class="step-num">3</div><div class="step-text">Place heel of hand on center of chest, other hand on top, interlace fingers</div></div>
-        <div class="step-item"><div class="step-num">4</div><div class="step-text">Push hard and fast — 5-6cm deep, 100-120 per minute (Stayin' Alive beat)</div></div>
-        <div class="step-item"><div class="step-num">5</div><div class="step-text">Give 2 rescue breaths after every 30 compressions (if trained)</div></div>
+        <div class="step-item"><div class="step-num">1</div><div class="step-text">Check scene is safe. Tap shoulders and shout "Are you okay?"</div></div>
+        <div class="step-item"><div class="step-num">2</div><div class="step-text">Call emergency services immediately</div></div>
+        <div class="step-item"><div class="step-num">3</div><div class="step-text">Place heel of hand on center of chest, other hand on top</div></div>
+        <div class="step-item"><div class="step-num">4</div><div class="step-text">Push hard and fast — 5-6cm deep, 100-120 per minute</div></div>
+        <div class="step-item"><div class="step-num">5</div><div class="step-text">Give 2 rescue breaths after every 30 compressions if trained</div></div>
         <div class="step-item"><div class="step-num">6</div><div class="step-text">Continue until ambulance arrives or person starts breathing</div></div>
     </div>
     """, unsafe_allow_html=True)
@@ -416,15 +291,15 @@ with col2:
     <div class="steps-card">
         <div style="font-size:13px;font-weight:700;color:white;margin-bottom:1rem;text-transform:uppercase;letter-spacing:1px;">🧠 FAST Stroke Test</div>
         <div class="step-item"><div class="step-num">F</div><div class="step-text">FACE — Ask them to smile. Does one side droop?</div></div>
-        <div class="step-item"><div class="step-num">A</div><div class="step-text">ARMS — Ask them to raise both arms. Does one drift downward?</div></div>
-        <div class="step-item"><div class="step-num">S</div><div class="step-text">SPEECH — Ask them to repeat a phrase. Is it slurred or strange?</div></div>
-        <div class="step-item"><div class="step-num">T</div><div class="step-text">TIME — If ANY of these, call emergency services IMMEDIATELY</div></div>
+        <div class="step-item"><div class="step-num">A</div><div class="step-text">ARMS — Raise both arms. Does one drift downward?</div></div>
+        <div class="step-item"><div class="step-num">S</div><div class="step-text">SPEECH — Repeat a phrase. Is it slurred or strange?</div></div>
+        <div class="step-item"><div class="step-num">T</div><div class="step-text">TIME — If ANY sign, call emergency services IMMEDIATELY</div></div>
         <br/>
         <div style="font-size:13px;font-weight:700;color:white;margin-bottom:0.5rem;">🩸 Severe Bleeding</div>
         <div class="step-item"><div class="step-num">1</div><div class="step-text">Apply firm direct pressure with clean cloth</div></div>
         <div class="step-item"><div class="step-num">2</div><div class="step-text">Do not remove cloth — add more on top if soaked</div></div>
-        <div class="step-item"><div class="step-num">3</div><div class="step-text">Elevate the injured area above heart level if possible</div></div>
+        <div class="step-item"><div class="step-num">3</div><div class="step-text">Elevate injured area above heart level if possible</div></div>
     </div>
     """, unsafe_allow_html=True)
 
-st.markdown('<div class="disclaimer">⚠️ This app provides first aid guidance for educational purposes only. Always call emergency services immediately in life-threatening situations. Do not delay calling for help. Professional medical care is always required.</div>', unsafe_allow_html=True)
+st.markdown('<div class="disclaimer">⚠️ For educational purposes only. Always call emergency services immediately in life-threatening situations. Do not delay calling for help.</div>', unsafe_allow_html=True)
