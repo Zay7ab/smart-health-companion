@@ -1,11 +1,13 @@
 import streamlit as st
-from groq import Groq
+import requests
 import sys
 sys.path.append('.')
 from utils.sidebar import load_sidebar
 
 st.set_page_config(page_title="Symptom Checker", page_icon="🔍", layout="wide")
 load_sidebar()
+
+API_URL = st.secrets.get("API_BASE_URL", "https://zay7ab-health-ai-api.hf.space")
 
 st.markdown("""
 <style>
@@ -30,7 +32,6 @@ div[data-testid="stButton"] button { background: linear-gradient(135deg,#3b6d11,
 label { color: #1a3a1a !important; }
 p { color: #1a3a1a !important; }
 div[data-testid="stCheckbox"] { background: white; border-radius: 8px; padding: 6px 10px; margin-bottom: 4px; border: 1px solid #e0ece0; }
-div[data-testid="stCheckbox"]:hover { border-color: #97c459; background: #f5f9f0; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -38,9 +39,9 @@ st.markdown("""
 <div class="topbar">
     <div>
         <div class="topbar-title">🔍 Symptom Checker</div>
-        <div class="topbar-sub">AI-powered symptom analysis via Groq LLaMA</div>
+        <div class="topbar-sub">AI-powered symptom analysis via FastAPI</div>
     </div>
-    <div class="ai-badge"><span class="ai-dot"></span> Groq AI Active</div>
+    <div class="ai-badge"><span class="ai-dot"></span> FastAPI + Groq AI Active</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -69,7 +70,6 @@ for i, symptom in enumerate(all_symptoms):
     with col:
         if st.checkbox(symptom, key=f"sym_{i}"):
             selected_symptoms.append(symptom)
-
 st.markdown('</div></div>', unsafe_allow_html=True)
 
 additional = st.text_area("Any additional symptoms or details?", placeholder="Describe any other symptoms...")
@@ -85,39 +85,46 @@ if st.button("⚡ Analyze Symptoms with AI"):
     if not selected_symptoms:
         st.warning("⚠️ Please select at least one symptom.")
     else:
-        with st.spinner("🤖 AI analyzing your symptoms..."):
+        with st.spinner("🤖 FastAPI analyzing symptoms..."):
             try:
-                client = Groq(api_key=st.secrets["GROQ_API_KEY"])
-                prompt = f"""Patient: Age {age}, {gender}, Symptoms: {', '.join(selected_symptoms)},
-                Duration: {duration}, Severity: {severity}, Existing: {', '.join(existing)},
-                Medications: {medications or 'None'}, Additional: {additional or 'None'}.
-
-                Provide structured analysis:
-                1. TOP 3 POSSIBLE CONDITIONS with urgency level and recommended action
-                2. RED FLAGS requiring emergency care
-                3. NEXT STEPS for next 24 hours
-
-                End with: This is not a medical diagnosis. Please consult a qualified doctor immediately."""
-                response = client.chat.completions.create(
-                    model="llama-3.3-70b-versatile",
-                    messages=[{"role": "user", "content": prompt}],
-                    max_tokens=600
+                response = requests.post(
+                    f"{API_URL}/symptoms/check",
+                    json={
+                        "age": int(age),
+                        "gender": gender,
+                        "symptoms": selected_symptoms,
+                        "duration": duration,
+                        "severity": severity,
+                        "existing_conditions": existing,
+                        "medications": medications,
+                        "additional": additional,
+                        "api_key": st.secrets.get("GROQ_API_KEY", "")
+                    },
+                    timeout=30
                 )
-                st.markdown(f"""
-                <div class="ai-insight">
-                    <div class="ai-insight-header">🤖 AI Symptom Analysis — {', '.join(selected_symptoms[:3])}{'...' if len(selected_symptoms) > 3 else ''}</div>
-                    <div class="ai-insight-text">{response.choices[0].message.content.replace(chr(10), '<br>')}</div>
-                </div>
-                """, unsafe_allow_html=True)
+                result = response.json()
 
-                if severity in ["Severe", "Very Severe"] or "Chest Pain" in selected_symptoms or "Shortness of Breath" in selected_symptoms:
-                    st.markdown("""
-                    <div style="background:linear-gradient(135deg,#fff0f0,#ffe0e0);border:1px solid #ffb3b3;border-radius:12px;padding:1rem 1.25rem;margin-top:1rem;">
-                        <div style="font-size:14px;font-weight:700;color:#c0392b;margin-bottom:4px;">🚨 Urgent Medical Attention Recommended</div>
-                        <div style="font-size:12px;color:#7a3a3a;">Your symptoms suggest you should seek medical care immediately. Please visit your nearest emergency room or call emergency services.</div>
+                if "error" in result:
+                    st.error(f"API Error: {result['error']}")
+                else:
+                    st.markdown(f"""
+                    <div class="ai-insight">
+                        <div class="ai-insight-header">🤖 AI Symptom Analysis (via FastAPI)</div>
+                        <div class="ai-insight-text">{result['analysis'].replace(chr(10), '<br>')}</div>
                     </div>
                     """, unsafe_allow_html=True)
+
+                    if result.get("is_urgent"):
+                        st.markdown("""
+                        <div style="background:linear-gradient(135deg,#fff0f0,#ffe0e0);border:1px solid #ffb3b3;border-radius:12px;padding:1rem 1.25rem;margin-top:1rem;">
+                            <div style="font-size:14px;font-weight:700;color:#c0392b;margin-bottom:4px;">🚨 Urgent Medical Attention Recommended</div>
+                            <div style="font-size:12px;color:#7a3a3a;">Please visit your nearest emergency room immediately.</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+
+            except requests.exceptions.Timeout:
+                st.error("⏱️ API timeout — please try again")
             except Exception as e:
                 st.error(f"Error: {e}")
 
-    st.markdown('<div class="disclaimer">⚠️ For educational purposes only. Always consult a qualified doctor immediately for medical emergencies.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="disclaimer">⚠️ For educational purposes only. Always consult a qualified doctor.</div>', unsafe_allow_html=True)
