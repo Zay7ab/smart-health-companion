@@ -1,11 +1,13 @@
 import streamlit as st
-from groq import Groq
+import requests
 import sys
 sys.path.append('.')
 from utils.sidebar import load_sidebar
 
 st.set_page_config(page_title="Health Tips", page_icon="💡", layout="wide")
 load_sidebar()
+
+API_URL = st.secrets.get("API_BASE_URL", "https://zay7ab-health-ai-api.hf.space")
 
 st.markdown("""
 <style>
@@ -17,8 +19,7 @@ st.markdown("""
 .topbar-sub { font-size: 12px; color: #639922; margin-top: 2px; }
 .ai-badge { display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg,#eaf3de,#d4edbe); border: 1px solid #97c459; border-radius: 20px; padding: 5px 12px; font-size: 11px; color: #27500a; font-weight: 600; }
 .ai-dot { width: 6px; height: 6px; border-radius: 50%; background: #639922; display: inline-block; }
-.tip-card { background: white; border: 1px solid #e0ece0; border-radius: 14px; padding: 1.25rem; margin-bottom: 10px; display: flex; gap: 1rem; align-items: flex-start; transition: all 0.2s; }
-.tip-card:hover { border-color: #97c459; box-shadow: 0 4px 15px rgba(99,153,34,0.08); }
+.tip-card { background: white; border: 1px solid #e0ece0; border-radius: 14px; padding: 1.25rem; margin-bottom: 10px; display: flex; gap: 1rem; align-items: flex-start; }
 .tip-number { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg,#eaf3de,#d4edbe); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #27500a; flex-shrink: 0; }
 .tip-content { flex: 1; }
 .tip-title { font-size: 13px; font-weight: 600; color: #1a3a1a; margin-bottom: 4px; }
@@ -37,38 +38,24 @@ st.markdown("""
 <div class="topbar">
     <div>
         <div class="topbar-title">💡 Health Tips Dashboard</div>
-        <div class="topbar-sub">AI-generated personalized health tips via Groq</div>
+        <div class="topbar-sub">AI-generated personalized health tips via FastAPI</div>
     </div>
-    <div class="ai-badge"><span class="ai-dot"></span> Groq AI Active</div>
+    <div class="ai-badge"><span class="ai-dot"></span> FastAPI + Groq AI Active</div>
 </div>
 """, unsafe_allow_html=True)
 
-categories = {
-    "❤️ Heart Health": "heart health, cardiovascular fitness, blood pressure management",
-    "🫁 Lung Health": "lung health, breathing exercises, respiratory wellness",
-    "🧠 Mental Health": "mental health, stress management, mindfulness, anxiety relief",
-    "🥗 Nutrition": "nutrition, healthy eating, diet, vitamins and minerals",
-    "🏃 Exercise": "exercise, fitness, workout routines, physical activity",
-    "😴 Sleep": "sleep quality, sleep hygiene, insomnia remedies, rest and recovery",
-    "💧 Hydration": "hydration, water intake, fluid balance, detox",
-    "🦷 Dental Health": "dental health, oral hygiene, teeth care",
-    "👁️ Eye Health": "eye health, vision care, screen time management",
-    "🧴 Skin Health": "skin health, skincare routine, sun protection",
-    "🦴 Bone Health": "bone health, calcium, osteoporosis prevention",
-    "🍽️ Digestive Health": "digestive health, gut microbiome, probiotics, fiber intake"
-}
-
+# Daily tip
 if "daily_tip" not in st.session_state:
     try:
-        client = Groq(api_key=st.secrets["GROQ_API_KEY"])
-        response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[{"role": "user", "content": "Give me one powerful health tip for today in 2 sentences. Be specific and actionable. No intro, just the tip."}],
-            max_tokens=80
+        response = requests.post(
+            f"{API_URL}/tips/daily",
+            json={"api_key": st.secrets.get("GROQ_API_KEY", "")},
+            timeout=30
         )
-        st.session_state.daily_tip = response.choices[0].message.content
+        result = response.json()
+        st.session_state.daily_tip = result.get("tip", "Stay hydrated and exercise daily!")
     except:
-        st.session_state.daily_tip = "Drink a glass of water first thing in the morning to kickstart your metabolism and hydrate your body after sleep."
+        st.session_state.daily_tip = "Drink a glass of water first thing in the morning to kickstart your metabolism."
 
 st.markdown(f"""
 <div class="daily-tip">
@@ -76,6 +63,21 @@ st.markdown(f"""
     <div class="daily-tip-text">{st.session_state.daily_tip}</div>
 </div>
 """, unsafe_allow_html=True)
+
+categories = {
+    "❤️ Heart Health": "heart health, cardiovascular fitness",
+    "🫁 Lung Health": "lung health, breathing exercises",
+    "🧠 Mental Health": "mental health, stress management",
+    "🥗 Nutrition": "nutrition, healthy eating, diet",
+    "🏃 Exercise": "exercise, fitness, workout routines",
+    "😴 Sleep": "sleep quality, sleep hygiene",
+    "💧 Hydration": "hydration, water intake",
+    "🦷 Dental Health": "dental health, oral hygiene",
+    "👁️ Eye Health": "eye health, vision care",
+    "🧴 Skin Health": "skin health, skincare routine",
+    "🦴 Bone Health": "bone health, calcium, osteoporosis",
+    "🍽️ Digestive Health": "digestive health, gut microbiome"
+}
 
 st.markdown("### 🔍 Select a Health Category")
 category = st.selectbox("Category", list(categories.keys()), label_visibility="collapsed")
@@ -87,21 +89,19 @@ with col2:
     generate = st.button("⚡ Generate AI Tips")
 
 if generate:
-    with st.spinner("🤖 Generating personalized tips..."):
+    with st.spinner("🤖 FastAPI generating tips..."):
         try:
-            client = Groq(api_key=st.secrets["GROQ_API_KEY"])
-            prompt = f"""Generate 5 specific actionable health tips about {categories[category]}
-            for someone aged {age_group}.
-            Format each as:
-            TITLE: [short title max 5 words]
-            TIP: [2-3 sentence detailed explanation]
-            Number them 1-5. Make them practical and evidence-based."""
-            response = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=600
+            response = requests.post(
+                f"{API_URL}/tips/generate",
+                json={
+                    "category": categories[category],
+                    "age_group": age_group,
+                    "api_key": st.secrets.get("GROQ_API_KEY", "")
+                },
+                timeout=30
             )
-            st.session_state.tips_result = response.choices[0].message.content
+            result = response.json()
+            st.session_state.tips_result = result.get("tips", "")
             st.session_state.tips_category = category
         except Exception as e:
             st.error(f"Error: {e}")
