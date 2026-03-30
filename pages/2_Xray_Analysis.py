@@ -1,14 +1,16 @@
 import streamlit as st
+import requests
 import numpy as np
 from PIL import Image
-import onnxruntime as ort
-from groq import Groq
+import io
 import sys
 sys.path.append('.')
 from utils.sidebar import load_sidebar
 
 st.set_page_config(page_title="X-Ray Analysis", page_icon="🫁", layout="wide")
 load_sidebar()
+
+API_URL = st.secrets.get("API_BASE_URL", "https://zay7ab-health-ai-api.hf.space")
 
 st.markdown("""
 <style>
@@ -45,7 +47,7 @@ st.markdown("""
         <div class="topbar-title">🫁 X-Ray Analysis</div>
         <div class="topbar-sub">Deep Learning CNN model for pneumonia detection</div>
     </div>
-    <div class="ai-badge"><span class="ai-dot"></span> Groq AI Active</div>
+    <div class="ai-badge"><span class="ai-dot"></span> FastAPI + Groq AI Active</div>
 </div>
 <div class="stats-row">
     <div class="stat-card">
@@ -66,10 +68,6 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-@st.cache_resource
-def load_model():
-    return ort.InferenceSession('models/xray_model.onnx')
-
 col1, col2 = st.columns([1, 1])
 with col1:
     st.markdown("""
@@ -87,55 +85,50 @@ with col2:
         st.image(image, caption="Uploaded X-Ray", use_column_width=True)
 
 if uploaded_file and st.button("⚡ Analyze X-Ray"):
-    with st.spinner("Running CNN analysis..."):
+    with st.spinner("🤖 FastAPI CNN analyzing..."):
         try:
-            session = load_model()
-            img = image.convert('RGB')
-            img = img.resize((150, 150))
-            img_array = np.array(img, dtype=np.float32) / 255.0
-            img_array = np.expand_dims(img_array, axis=0)
-            input_name = session.get_inputs()[0].name
-            prediction = session.run(None, {input_name: img_array})[0]
-            probability = prediction[0][0]
+            img_bytes = uploaded_file.getvalue()
+            response = requests.post(
+                f"{API_URL}/predict/xray",
+                files={"file": ("xray.jpg", img_bytes, "image/jpeg")},
+                timeout=60
+            )
+            result = response.json()
 
-            if probability > 0.5:
-                st.markdown(f"""
-                <div class="result-high">
-                    <div style="font-size:16px;font-weight:700;color:#c0392b">⚠️ Pneumonia Detected</div>
-                    <div style="font-size:28px;font-weight:700;color:#c0392b">{probability*100:.1f}%</div>
-                    <div style="font-size:12px;color:#7a3a3a;margin-top:4px">Confidence Level</div>
-                </div>
-                """, unsafe_allow_html=True)
-                result = "pneumonia detected"
+            if "error" in result:
+                st.error(f"API Error: {result['error']}")
             else:
-                st.markdown(f"""
-                <div class="result-low">
-                    <div style="font-size:16px;font-weight:700;color:#27500a">✅ Normal</div>
-                    <div style="font-size:28px;font-weight:700;color:#27500a">{(1-probability)*100:.1f}%</div>
-                    <div style="font-size:12px;color:#3b6d11;margin-top:4px">Confidence Level</div>
-                </div>
-                """, unsafe_allow_html=True)
-                result = "normal, no pneumonia detected"
+                probability = result["probability"]
+                is_pneumonia = result["is_pneumonia"]
 
-            with st.spinner("🤖 Getting AI insights..."):
-                client = Groq(api_key=st.secrets["GROQ_API_KEY"])
-                prompt = f"""A chest X-ray CNN model detected: {result} with {probability*100:.1f}% confidence.
-                Give a brief 3-4 sentence professional medical insight, what it means and next steps.
-                End with: Always consult a qualified radiologist or pulmonologist."""
-                response = client.chat.completions.create(
-                    model="llama-3.3-70b-versatile",
-                    messages=[{"role": "user", "content": prompt}],
-                    max_tokens=200
-                )
-                insight = response.choices[0].message.content
-                st.markdown(f"""
-                <div class="ai-insight">
-                    <div class="ai-insight-header">🤖 AI Medical Insight</div>
-                    <div class="ai-insight-text">{insight}</div>
-                </div>
-                """, unsafe_allow_html=True)
+                if is_pneumonia:
+                    st.markdown(f"""
+                    <div class="result-high">
+                        <div style="font-size:16px;font-weight:700;color:#c0392b">⚠️ Pneumonia Detected</div>
+                        <div style="font-size:28px;font-weight:700;color:#c0392b">{probability*100:.1f}%</div>
+                        <div style="font-size:12px;color:#7a3a3a;margin-top:4px">Confidence Level</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    st.markdown(f"""
+                    <div class="result-low">
+                        <div style="font-size:16px;font-weight:700;color:#27500a">✅ Normal</div>
+                        <div style="font-size:28px;font-weight:700;color:#27500a">{(1-probability)*100:.1f}%</div>
+                        <div style="font-size:12px;color:#3b6d11;margin-top:4px">Confidence Level</div>
+                    </div>
+                    """, unsafe_allow_html=True)
 
-            st.markdown('<div class="disclaimer">⚠️ For educational purposes only. Always consult a qualified doctor.</div>', unsafe_allow_html=True)
+                if "ai_insight" in result:
+                    st.markdown(f"""
+                    <div class="ai-insight">
+                        <div class="ai-insight-header">🤖 AI Medical Insight (via FastAPI)</div>
+                        <div class="ai-insight-text">{result['ai_insight']}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
 
+        except requests.exceptions.Timeout:
+            st.error("⏱️ API timeout — please try again")
         except Exception as e:
             st.error(f"Error: {e}")
+
+    st.markdown('<div class="disclaimer">⚠️ For educational purposes only. Always consult a qualified doctor.</div>', unsafe_allow_html=True)
