@@ -1,71 +1,123 @@
 import streamlit as st
 import requests
 import datetime
-import sys
-sys.path.append('.')
-from utils.sidebar import load_sidebar
 
-st.set_page_config(page_title="AI Health Chatbot", page_icon="🤖", layout="wide")
-load_sidebar()
+# --- CONFIG & SIDEBAR ---
+st.set_page_config(page_title="MediMate Chatbot", page_icon="🟢", layout="wide")
+# load_sidebar() # Isko uncomment kar dein agar file available hai
 
 API_URL = st.secrets.get("API_BASE_URL", "https://zay7ab-health-ai-api.hf.space")
 
+# --- CUSTOM CSS (MEDIMATE DESIGN) ---
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-* { font-family: 'Inter', sans-serif; box-sizing: border-box; }
-.stApp { background: #f0f4f0 !important; }
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
 
-.chat-topbar { background: white; border-radius: 16px; padding: 1rem 1.5rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 12px; border: 1px solid #e0ece0; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
-.chat-topbar-avatar { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg,#2d5a1a,#639922); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; }
-.chat-topbar-name { font-size: 16px; font-weight: 700; color: #1a3a1a; }
-.chat-topbar-status { font-size: 11px; color: #639922; display: flex; align-items: center; gap: 4px; margin-top: 2px; }
-.online-dot { width: 6px; height: 6px; border-radius: 50%; background: #639922; display: inline-block; animation: blink 2s infinite; }
-@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
-.topbar-badge { background: #eaf3de; color: #27500a; font-size: 10px; font-weight: 600; padding: 4px 10px; border-radius: 20px; border: 1px solid #d4edbe; margin-left: auto; }
+* { font-family: 'Plus Jakarta Sans', sans-serif; }
+.stApp { background-color: #F8F9FE !important; }
 
-.chat-box { background: white; border-radius: 16px; border: 1px solid #e0ece0; margin-bottom: 1rem; overflow: hidden; }
-.chat-box-header { background: #f8faf8; border-bottom: 1px solid #e8f0e8; padding: 0.75rem 1.25rem; display: flex; align-items: center; justify-content: space-between; }
-.chat-box-title { font-size: 13px; font-weight: 600; color: #1a3a1a; }
-.chat-box-badge { font-size: 10px; color: #639922; background: #eaf3de; padding: 2px 8px; border-radius: 20px; }
-.chat-body { padding: 1.25rem; background: #fafcfa; min-height: 320px; }
+/* Main Container */
+.chat-container {
+    max-width: 600px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    overflow: hidden;
+}
 
-.date-badge { text-align: center; margin-bottom: 1rem; }
-.date-badge span { background: #f0f4f0; color: #7a8f7a; font-size: 11px; padding: 3px 12px; border-radius: 20px; }
+/* Top Bar */
+.chat-header {
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #F0F2F6;
+    background: white;
+}
+.back-arrow { font-size: 20px; color: #10B981; margin-right: 15px; cursor: pointer; }
+.bot-avatar {
+    width: 45px; height: 45px;
+    background: #F0FDF4;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin-right: 12px;
+}
+.header-text { flex-grow: 1; }
+.header-title { font-size: 16px; font-weight: 700; color: #1F2937; margin: 0; }
+.header-subtitle { font-size: 12px; color: #6B7280; margin: 0; }
 
-.msg-ai { display: flex; align-items: flex-end; gap: 8px; margin-bottom: 14px; }
-.msg-ai-ava { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg,#2d5a1a,#639922); display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
-.msg-ai-bubble { background: white; border: 1px solid #e8f0e8; border-radius: 4px 16px 16px 16px; padding: 10px 14px; max-width: 70%; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
-.msg-ai-text { font-size: 13px; color: #1a3a1a; line-height: 1.7; }
-.msg-time { font-size: 10px; color: #aab8aa; margin-top: 4px; }
+/* Message Bubbles */
+.chat-box { padding: 20px; background: #FFFFFF; min-height: 400px; }
 
-.msg-user { display: flex; justify-content: flex-end; align-items: flex-end; gap: 8px; margin-bottom: 14px; }
-.msg-user-ava { width: 32px; height: 32px; border-radius: 50%; background: #d4edbe; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
-.msg-user-bubble { background: linear-gradient(135deg,#2d5a1a,#4a8520); border-radius: 16px 4px 16px 16px; padding: 10px 14px; max-width: 70%; }
-.msg-user-text { font-size: 13px; color: white; line-height: 1.6; }
-.msg-time-user { font-size: 10px; color: rgba(255,255,255,0.55); margin-top: 4px; text-align: right; }
+.ai-row { display: flex; margin-bottom: 20px; align-items: flex-start; }
+.ai-bubble {
+    background: #F3F4F6;
+    color: #374151;
+    padding: 12px 16px;
+    border-radius: 4px 20px 20px 20px;
+    max-width: 80%;
+    font-size: 14px;
+    line-height: 1.5;
+}
 
-.section-title { font-size: 12px; font-weight: 600; color: #7a8f7a; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+.user-row { display: flex; justify-content: flex-end; margin-bottom: 20px; }
+.user-bubble {
+    background: #10B981;
+    color: white;
+    padding: 12px 16px;
+    border-radius: 20px 4px 20px 20px;
+    max-width: 80%;
+    font-size: 14px;
+}
 
-.symptom-card { background: white; border: 2px solid #e0ece0; border-radius: 12px; padding: 0.875rem 0.5rem; text-align: center; transition: all 0.15s; }
-.symptom-card:hover { border-color: #639922; background: #f5f9f0; }
-.symptom-icon { font-size: 1.6rem; margin-bottom: 4px; }
-.symptom-name { font-size: 11px; font-weight: 600; color: #1a3a1a; }
+.timestamp { font-size: 10px; color: #9CA3AF; margin-top: 5px; }
 
-.disclaimer { background: #fff8e1; border: 1px solid #f0c040; border-radius: 10px; padding: 0.75rem 1rem; font-size: 11px; color: #7a6000; margin-top: 1rem; }
+/* Symptom Selection Cards */
+.symptom-section {
+    background: white;
+    padding: 20px;
+    border-radius: 25px 25px 0 0;
+    box-shadow: 0 -5px 20px rgba(0,0,0,0.03);
+}
+.symptom-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 15px;
+}
+/* Streamlit checkbox styling to look like cards */
+div[data-testid="stCheckbox"] {
+    background: #F9FAFB;
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    padding: 10px;
+    transition: 0.3s;
+}
+div[data-testid="stCheckbox"]:has(input:checked) {
+    border: 2px solid #10B981;
+    background: #ECFDF5;
+}
 
-div[data-testid="stButton"] button { background: white !important; color: #27500a !important; border: 1.5px solid #d4edbe !important; border-radius: 20px !important; font-weight: 500 !important; font-size: 12px !important; padding: 0.4rem 1rem !important; transition: all 0.15s !important; }
-div[data-testid="stButton"] button:hover { background: #eaf3de !important; border-color: #97c459 !important; }
-label { color: #1a3a1a !important; }
-p { color: #1a3a1a !important; }
+/* Buttons */
+div[data-testid="stButton"] button {
+    width: 100%;
+    background-color: #10B981 !important;
+    color: white !important;
+    border-radius: 12px !important;
+    border: none !important;
+    padding: 10px !important;
+    font-weight: 600 !important;
+}
+
+/* Hide Streamlit elements */
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
-# Session state
+# --- SESSION STATE ---
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
-
-now = datetime.datetime.now().strftime("%I:%M %p")
 
 def get_ai_response(user_input, history, language="English"):
     try:
@@ -79,187 +131,86 @@ def get_ai_response(user_input, history, language="English"):
             },
             timeout=30
         )
-        result = response.json()
-        if "error" in result:
-            return "Sorry, I encountered an error. Please try again."
-        return result["reply"]
+        return response.json().get("reply", "Error in response")
     except:
         return "Connection error. Please try again."
 
-# Top bar
-st.markdown(f"""
-<div class="chat-topbar">
-    <div class="chat-topbar-avatar">🤖</div>
-    <div>
-        <div class="chat-topbar-name">HealthAI Assistant</div>
-        <div class="chat-topbar-status">
-            <span class="online-dot"></span>
-            Your Health Assistant · Online
-        </div>
+# --- UI LAYOUT ---
+
+# 1. Header
+st.markdown("""
+<div class="chat-header">
+    <div class="back-arrow">←</div>
+    <div class="bot-avatar">🩺</div>
+    <div class="header-text">
+        <p class="header-subtitle">Your Health Assistant</p>
+        <p class="header-title">MediMate Chatbot</p>
     </div>
-    <div class="topbar-badge">FastAPI + LLaMA 3.3</div>
+    <div style="color: #6B7280;">⋮</div>
 </div>
 """, unsafe_allow_html=True)
 
-# Layout
-col_main, col_side = st.columns([3, 1])
+# 2. Chat Messages
+current_time = datetime.datetime.now().strftime("%I:%M %p")
 
-with col_main:
-    # Chat window
-    st.markdown("""
-    <div class="chat-box">
-        <div class="chat-box-header">
-            <span class="chat-box-title">💬 Conversation</span>
-            <span class="chat-box-badge">FastAPI Powered</span>
-        </div>
-        <div class="chat-body">
-            <div class="date-badge"><span>Today</span></div>
-    """, unsafe_allow_html=True)
-
-    # Welcome message
+with st.container():
+    st.markdown('<div class="chat-box">', unsafe_allow_html=True)
+    
+    # Welcome Message
     st.markdown(f"""
-    <div class="msg-ai">
-        <div class="msg-ai-ava">🤖</div>
-        <div class="msg-ai-bubble">
-            <div class="msg-ai-text">Hi! I am <b>HealthAI Assistant</b>. I am here to help you with health questions, symptom analysis, medication information and wellness advice.<br/><br/>How can I help you today?</div>
-            <div class="msg-time">{now}</div>
+    <div class="ai-row">
+        <div class="ai-bubble">
+            Hi! I am MediMate. How can I help you today?
+            <div class="timestamp">{current_time}</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # Chat messages
-    for message in st.session_state.chat_history:
-        if message["role"] == "user":
-            st.markdown(f"""
-            <div class="msg-user">
-                <div class="msg-user-bubble">
-                    <div class="msg-user-text">{message["content"]}</div>
-                    <div class="msg-time-user">{now}</div>
-                </div>
-                <div class="msg-user-ava">👤</div>
-            </div>
-            """, unsafe_allow_html=True)
+    for msg in st.session_state.chat_history:
+        if msg["role"] == "user":
+            st.markdown(f'<div class="user-row"><div class="user-bubble">{msg["content"]}</div></div>', unsafe_allow_html=True)
         else:
-            st.markdown(f"""
-            <div class="msg-ai">
-                <div class="msg-ai-ava">🤖</div>
-                <div class="msg-ai-bubble">
-                    <div class="msg-ai-text">{message["content"]}</div>
-                    <div class="msg-time">{now}</div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-
-    st.markdown('</div></div>', unsafe_allow_html=True)
-
-    # Symptom selector
-    st.markdown('<div style="margin-top:1rem;"><div class="section-title">🩺 Select Symptoms</div></div>', unsafe_allow_html=True)
-
-    symptoms_list = [
-        ("🌡️", "Fever"), ("🤒", "Headache"), ("💔", "Chest Pain"),
-        ("😮‍💨", "Breathlessness"), ("🤢", "Nausea"), ("😴", "Fatigue"),
-        ("🩸", "Bleeding"), ("🦴", "Joint Pain"), ("👁️", "Blurred Vision"),
-    ]
-
-    selected_symptoms = []
-    sym_cols = st.columns(9)
-    for i, (icon, symptom) in enumerate(symptoms_list):
-        with sym_cols[i]:
-            st.markdown(f"""
-            <div class="symptom-card">
-                <div class="symptom-icon">{icon}</div>
-                <div class="symptom-name">{symptom}</div>
-            </div>
-            """, unsafe_allow_html=True)
-            if st.checkbox("", key=f"sym_{symptom}", label_visibility="collapsed"):
-                selected_symptoms.append(symptom)
-
-    if selected_symptoms:
-        st.markdown(f"""
-        <div style="background:#eaf3de;border:1px solid #97c459;border-radius:10px;padding:0.6rem 1rem;margin-top:0.75rem;font-size:12px;color:#27500a;">
-            <b>Selected:</b> {', '.join(selected_symptoms)}
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("🔍 Analyze These Symptoms"):
-            msg = f"I have these symptoms: {', '.join(selected_symptoms)}. What could be wrong and what should I do?"
-            st.session_state.chat_history.append({"role": "user", "content": msg})
-            with st.spinner("HealthAI is analyzing..."):
-                reply = get_ai_response(msg, st.session_state.chat_history[:-1])
-                st.session_state.chat_history.append({"role": "assistant", "content": reply})
-                st.rerun()
-
-    # Language + chat input
-    st.markdown('<div style="margin-top:1rem;">', unsafe_allow_html=True)
-    lang_col, _ = st.columns([1, 3])
-    with lang_col:
-        language = st.selectbox("🌐 Language", [
-            "English", "Arabic", "Urdu", "Hindi", "French",
-            "Spanish", "German", "Turkish", "Persian", "Malay"
-        ])
+            st.markdown(f'<div class="ai-row"><div class="ai-bubble">{msg["content"]}</div></div>', unsafe_allow_html=True)
+    
     st.markdown('</div>', unsafe_allow_html=True)
 
-    user_input = st.chat_input("Type your health question here...")
-    if user_input:
-        st.session_state.chat_history.append({"role": "user", "content": user_input})
-        with st.spinner("HealthAI is thinking..."):
-            reply = get_ai_response(user_input, st.session_state.chat_history[:-1], language)
-            st.session_state.chat_history.append({"role": "assistant", "content": reply})
-            st.rerun()
+# 3. Symptom Selector (Image Style)
+st.markdown('<div class="symptom-section">', unsafe_allow_html=True)
+st.markdown("<p style='text-align:center; font-weight:700; color:#1F2937;'>SELECT SYMPTOMS</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center; font-size:12px; color:#6B7280;'>Please choose symptoms you've been experiencing.</p>", unsafe_allow_html=True)
 
-    # Action buttons
-    if st.session_state.chat_history:
-        btn_col1, btn_col2, btn_col3 = st.columns(3)
-        with btn_col1:
-            if st.button("🗑️ Clear Chat"):
-                st.session_state.chat_history = []
-                st.rerun()
-        with btn_col2:
-            chat_text = "\n\n".join([
-                f"{'You' if m['role']=='user' else 'HealthAI'}: {m['content']}"
-                for m in st.session_state.chat_history
-            ])
-            st.download_button("💾 Save Chat", data=chat_text, file_name="health_chat.txt", mime="text/plain")
-        with btn_col3:
-            if st.button("🔄 New Session"):
-                st.session_state.chat_history = []
-                st.rerun()
+symptoms = [
+    ("🌡️", "Fever"), ("🤢", "Vomiting"), ("😮‍💨", "Breathless"),
+    ("😔", "Depression"), ("👄", "Mouth Sore"), ("🚽", "Diarrhea")
+]
 
-with col_side:
-    # Quick questions
-    st.markdown('<div class="section-title">💬 Quick Questions</div>', unsafe_allow_html=True)
-    quick_questions = [
-        ("🫀", "Signs of heart attack?"),
-        ("🩸", "Blood sugar control"),
-        ("🧠", "Anxiety relief tips"),
-        ("💊", "Drug interactions"),
-        ("🤒", "Fever and body aches"),
-        ("😴", "Better sleep tips"),
-        ("🏃", "Exercise for beginners"),
-        ("🥗", "Anti-inflammatory foods"),
-    ]
-    for icon, question in quick_questions:
-        if st.button(f"{icon} {question}", key=f"qq_{question}"):
-            st.session_state.chat_history.append({"role": "user", "content": question})
-            with st.spinner(""):
-                reply = get_ai_response(question, st.session_state.chat_history[:-1], "English")
-                st.session_state.chat_history.append({"role": "assistant", "content": reply})
-                st.rerun()
+selected = []
+cols = st.columns(3)
+for i, (icon, name) in enumerate(symptoms):
+    with cols[i % 3]:
+        if st.checkbox(f"{icon}\n{name}", key=f"sym_{name}"):
+            selected.append(name)
 
-    st.markdown('<div style="margin-top:1rem;"><div class="section-title">✨ Capabilities</div></div>', unsafe_allow_html=True)
-    capabilities = ["Symptom analysis", "Drug information", "Mental health", "Nutrition advice", "Emergency guidance", "Lab results", "50+ languages"]
-    for cap in capabilities:
-        st.markdown(f"""
-        <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f5f7f5;font-size:12px;color:#3a4a3a;">
-            <div style="width:6px;height:6px;border-radius:50%;background:#639922;flex-shrink:0;"></div>
-            {cap}
-        </div>
-        """, unsafe_allow_html=True)
+if st.button("NEXT →"):
+    if selected:
+        user_msg = f"I am feeling: {', '.join(selected)}"
+        st.session_state.chat_history.append({"role": "user", "content": user_msg})
+        reply = get_ai_response(user_msg, st.session_state.chat_history[:-1])
+        st.session_state.chat_history.append({"role": "assistant", "content": reply})
+        st.rerun()
 
-    st.markdown('<div style="margin-top:1rem;"><div class="section-title">🏷️ Topics</div></div>', unsafe_allow_html=True)
-    topics = ["Heart Health", "Diabetes", "Blood Pressure", "Mental Health", "Nutrition", "Sleep", "Pregnancy", "Allergies"]
-    topics_html = ""
-    for topic in topics:
-        topics_html += f'<span style="display:inline-block;background:#f0f4f0;border:1px solid #d4edbe;color:#3b6d11;border-radius:20px;padding:4px 10px;font-size:11px;font-weight:500;margin:3px;">{topic}</span>'
-    st.markdown(f'<div style="line-height:2;">{topics_html}</div>', unsafe_allow_html=True)
+st.markdown('</div>', unsafe_allow_html=True)
 
-st.markdown('<div class="disclaimer">⚠️ HealthAI provides general health information only. Always consult a qualified doctor. In emergencies call 999/911/112 immediately.</div>', unsafe_allow_html=True)
+# 4. Input Area
+user_input = st.chat_input("Type message here...")
+if user_input:
+    st.session_state.chat_history.append({"role": "user", "content": user_input})
+    reply = get_ai_response(user_input, st.session_state.chat_history[:-1])
+    st.session_state.chat_history.append({"role": "assistant", "content": reply})
+    st.rerun()
+
+st.markdown("""
+<div style="padding: 15px; font-size: 10px; color: #9CA3AF; text-align: center;">
+    ⚠️ General info only. Consult a doctor for emergencies.
+</div>
+""", unsafe_allow_html=True)
