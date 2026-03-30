@@ -37,7 +37,6 @@ st.markdown("""
 .chat-box-header { background: #f8faf8; border: 1px solid #e0ece0; border-bottom: none; border-radius: 16px 16px 0 0; padding: 0.75rem 1.25rem; display: flex; align-items: center; justify-content: space-between; }
 .chat-box-title { font-size: 13px; font-weight: 600; color: #1a3a1a; }
 .chat-box-badge { font-size: 10px; color: #639922; background: #eaf3de; padding: 2px 8px; border-radius: 20px; }
-.chat-box-footer { background: #f8faf8; border: 1px solid #e0ece0; border-top: none; border-radius: 0 0 16px 16px; padding: 0.5rem 1rem; }
 .symptom-card-wrap { background: white; border: 1.5px solid #e0ece0; border-radius: 12px; padding: 0.75rem 0.5rem; text-align: center; }
 .symptom-icon { font-size: 1.5rem; }
 .symptom-name { font-size: 11px; font-weight: 600; color: #1a3a1a; margin-top: 4px; }
@@ -125,7 +124,6 @@ with col_side:
     language = st.selectbox("", ["English","Arabic","Urdu","Hindi","French","Spanish","German","Turkish","Persian","Malay"], label_visibility="collapsed")
 
 with col_main:
-    # Chat box header
     st.markdown("""
     <div class="chat-box-header">
         <span class="chat-box-title">💬 Conversation</span>
@@ -133,13 +131,11 @@ with col_main:
     </div>
     """, unsafe_allow_html=True)
 
-    # Scrollable chat using Streamlit container
-    chat_area = st.container(height=420, border=True)
+    chat_area = st.container(height=450, border=True)
 
     with chat_area:
         st.markdown('<div class="date-badge"><span>Today</span></div>', unsafe_allow_html=True)
 
-        # Welcome message
         st.markdown(f"""
         <div class="msg-ai">
             <div class="msg-ai-ava">🤖</div>
@@ -150,7 +146,6 @@ with col_main:
         </div>
         """, unsafe_allow_html=True)
 
-        # All messages
         for message in st.session_state.chat_history:
             if message["role"] == "user":
                 st.markdown(f"""
@@ -172,6 +167,33 @@ with col_main:
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
+
+        # Auto scroll anchor
+        st.markdown('<div id="chat-end"></div>', unsafe_allow_html=True)
+
+    # Auto scroll JavaScript
+    st.markdown("""
+    <script>
+        function autoScroll() {
+            var iframes = window.parent.document.querySelectorAll('iframe');
+            iframes.forEach(function(iframe) {
+                try {
+                    var scrollable = iframe.contentDocument.querySelectorAll('[data-testid="stVerticalBlockBorderWrapper"]');
+                    scrollable.forEach(function(el) {
+                        el.scrollTop = el.scrollHeight;
+                    });
+                } catch(e) {}
+            });
+            var blocks = window.parent.document.querySelectorAll('[data-testid="stVerticalBlockBorderWrapper"]');
+            blocks.forEach(function(el) {
+                el.scrollTop = el.scrollHeight;
+            });
+        }
+        setTimeout(autoScroll, 200);
+        setTimeout(autoScroll, 600);
+        setTimeout(autoScroll, 1200);
+    </script>
+    """, unsafe_allow_html=True)
 
     # Symptom selector
     st.markdown('<div class="section-label">🩺 Select Symptoms</div>', unsafe_allow_html=True)
@@ -216,7 +238,6 @@ with col_main:
             st.session_state.chat_history.append({"role": "assistant", "content": reply})
             st.rerun()
 
-    # Action buttons
     if st.session_state.chat_history:
         b1, b2, b3 = st.columns(3)
         with b1:
