@@ -24,29 +24,35 @@ st.markdown("""
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
 .topbar-badge { background: #eaf3de; color: #27500a; font-size: 10px; font-weight: 600; padding: 4px 10px; border-radius: 20px; border: 1px solid #d4edbe; margin-left: auto; }
 
+.chat-container { background: white; border-radius: 16px; border: 1px solid #e0ece0; overflow: hidden; display: flex; flex-direction: column; height: 520px; }
+.chat-container-header { background: #f8faf8; border-bottom: 1px solid #e8f0e8; padding: 0.75rem 1.25rem; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+.chat-container-title { font-size: 13px; font-weight: 600; color: #1a3a1a; }
+.chat-container-badge { font-size: 10px; color: #639922; background: #eaf3de; padding: 2px 8px; border-radius: 20px; }
+.chat-messages-scroll { flex: 1; overflow-y: auto; padding: 1.25rem; background: #fafcfa; scroll-behavior: smooth; }
+.chat-messages-scroll::-webkit-scrollbar { width: 4px; }
+.chat-messages-scroll::-webkit-scrollbar-track { background: transparent; }
+.chat-messages-scroll::-webkit-scrollbar-thumb { background: #d4edbe; border-radius: 4px; }
+
+.date-badge { text-align: center; margin-bottom: 12px; }
+.date-badge span { background: #f0f4f0; color: #7a8f7a; font-size: 11px; padding: 3px 12px; border-radius: 20px; }
+
 .msg-ai { display: flex; align-items: flex-end; gap: 8px; margin-bottom: 14px; }
 .msg-ai-ava { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg,#2d5a1a,#639922); display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
-.msg-ai-bubble { background: white; border: 1px solid #e8f0e8; border-radius: 4px 16px 16px 16px; padding: 10px 14px; max-width: 72%; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+.msg-ai-bubble { background: white; border: 1px solid #e8f0e8; border-radius: 4px 16px 16px 16px; padding: 10px 14px; max-width: 75%; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
 .msg-ai-text { font-size: 13px; color: #1a3a1a; line-height: 1.7; }
 .msg-time { font-size: 10px; color: #aab8aa; margin-top: 4px; }
 
 .msg-user { display: flex; justify-content: flex-end; align-items: flex-end; gap: 8px; margin-bottom: 14px; }
 .msg-user-ava { width: 32px; height: 32px; border-radius: 50%; background: #d4edbe; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
-.msg-user-bubble { background: linear-gradient(135deg,#2d5a1a,#4a8520); border-radius: 16px 4px 16px 16px; padding: 10px 14px; max-width: 72%; }
+.msg-user-bubble { background: linear-gradient(135deg,#2d5a1a,#4a8520); border-radius: 16px 4px 16px 16px; padding: 10px 14px; max-width: 75%; }
 .msg-user-text { font-size: 13px; color: white; line-height: 1.6; }
 .msg-time-user { font-size: 10px; color: rgba(255,255,255,0.55); margin-top: 4px; text-align: right; }
 
-.date-badge { text-align: center; margin-bottom: 12px; }
-.date-badge span { background: #f0f4f0; color: #7a8f7a; font-size: 11px; padding: 3px 12px; border-radius: 20px; }
-
-.symptom-card-wrap { background: white; border: 1.5px solid #e0ece0; border-radius: 12px; padding: 0.75rem 0.5rem; text-align: center; cursor: pointer; }
+.symptom-card-wrap { background: white; border: 1.5px solid #e0ece0; border-radius: 12px; padding: 0.75rem 0.5rem; text-align: center; }
 .symptom-icon { font-size: 1.5rem; }
 .symptom-name { font-size: 11px; font-weight: 600; color: #1a3a1a; margin-top: 4px; }
 
 .section-label { font-size: 11px; font-weight: 600; color: #7a8f7a; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
-
-.qq-btn { width: 100%; background: white !important; color: #27500a !important; border: 1.5px solid #d4edbe !important; border-radius: 20px !important; font-size: 12px !important; font-weight: 500 !important; padding: 0.4rem 0.75rem !important; margin-bottom: 6px !important; text-align: left !important; }
-.qq-btn:hover { background: #eaf3de !important; border-color: #97c459 !important; }
 
 .cap-item { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid #f5f7f5; font-size: 12px; color: #3a4a3a; }
 .cap-item:last-child { border-bottom: none; }
@@ -84,6 +90,41 @@ def get_ai_response(user_input, history, language="English"):
         return result["reply"]
     except:
         return "Connection error. Please try again."
+
+# Build messages HTML
+def build_messages_html():
+    html = '<div class="date-badge"><span>Today</span></div>'
+    html += f"""
+    <div class="msg-ai">
+        <div class="msg-ai-ava">🤖</div>
+        <div class="msg-ai-bubble">
+            <div class="msg-ai-text">Hi! I am <b>HealthAI Assistant</b>. I am here to help you with health questions, symptom analysis, medication information and wellness advice.<br/><br/>How can I help you today?</div>
+            <div class="msg-time">{now}</div>
+        </div>
+    </div>
+    """
+    for message in st.session_state.chat_history:
+        if message["role"] == "user":
+            html += f"""
+            <div class="msg-user">
+                <div class="msg-user-bubble">
+                    <div class="msg-user-text">{message["content"]}</div>
+                    <div class="msg-time-user">{now}</div>
+                </div>
+                <div class="msg-user-ava">👤</div>
+            </div>
+            """
+        else:
+            html += f"""
+            <div class="msg-ai">
+                <div class="msg-ai-ava">🤖</div>
+                <div class="msg-ai-bubble">
+                    <div class="msg-ai-text">{message["content"]}</div>
+                    <div class="msg-time">{now}</div>
+                </div>
+            </div>
+            """
+    return html
 
 # Topbar
 st.markdown(f"""
@@ -136,42 +177,23 @@ with col_side:
     language = st.selectbox("", ["English","Arabic","Urdu","Hindi","French","Spanish","German","Turkish","Persian","Malay"], label_visibility="collapsed")
 
 with col_main:
-    # Welcome + messages
-    st.markdown('<div class="date-badge"><span>Today</span></div>', unsafe_allow_html=True)
-
-    # Welcome message always first
+    # Scrollable chat box
+    messages_html = build_messages_html()
     st.markdown(f"""
-    <div class="msg-ai">
-        <div class="msg-ai-ava">🤖</div>
-        <div class="msg-ai-bubble">
-            <div class="msg-ai-text">Hi! I am <b>HealthAI Assistant</b>. I am here to help you with health questions, symptom analysis, medication information and wellness advice.<br/><br/>How can I help you today?</div>
-            <div class="msg-time">{now}</div>
+    <div class="chat-container">
+        <div class="chat-container-header">
+            <span class="chat-container-title">💬 Conversation</span>
+            <span class="chat-container-badge">FastAPI Powered</span>
+        </div>
+        <div class="chat-messages-scroll" id="chat-scroll">
+            {messages_html}
         </div>
     </div>
+    <script>
+        var chatScroll = document.getElementById('chat-scroll');
+        if(chatScroll) {{ chatScroll.scrollTop = chatScroll.scrollHeight; }}
+    </script>
     """, unsafe_allow_html=True)
-
-    # Chat messages
-    for message in st.session_state.chat_history:
-        if message["role"] == "user":
-            st.markdown(f"""
-            <div class="msg-user">
-                <div class="msg-user-bubble">
-                    <div class="msg-user-text">{message["content"]}</div>
-                    <div class="msg-time-user">{now}</div>
-                </div>
-                <div class="msg-user-ava">👤</div>
-            </div>
-            """, unsafe_allow_html=True)
-        else:
-            st.markdown(f"""
-            <div class="msg-ai">
-                <div class="msg-ai-ava">🤖</div>
-                <div class="msg-ai-bubble">
-                    <div class="msg-ai-text">{message["content"]}</div>
-                    <div class="msg-time">{now}</div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
 
     # Symptom selector
     st.markdown('<div style="margin-top:1rem;"><div class="section-label">🩺 Select Symptoms</div></div>', unsafe_allow_html=True)
