@@ -1,13 +1,13 @@
 import streamlit as st
-import joblib
-import numpy as np
-from groq import Groq
+import requests
 import sys
 sys.path.append('.')
 from utils.sidebar import load_sidebar
 
 st.set_page_config(page_title="Heart Disease Prediction", page_icon="🫀", layout="wide")
 load_sidebar()
+
+API_URL = st.secrets.get("API_BASE_URL", "https://zay7ab-health-ai-api.hf.space")
 
 st.markdown("""
 <style>
@@ -29,11 +29,8 @@ st.markdown("""
 .form-header { padding: 1rem 1.25rem; background: linear-gradient(135deg,#f5f9f0,#eaf3de); border-bottom: 1px solid #e0ece0; display: flex; align-items: center; justify-content: space-between; }
 .form-header h2 { font-size: 14px; font-weight: 600; color: #1a3a1a; }
 .form-tag { font-size: 10px; color: #3b6d11; background: #d4edbe; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
-.form-body { padding: 1.25rem; }
 .result-high { background: linear-gradient(135deg,#fff0f0,#ffe0e0); border: 1px solid #ffb3b3; border-radius: 14px; padding: 1.25rem; margin-top: 1rem; }
 .result-low { background: linear-gradient(135deg,#f0fff4,#e0ffe8); border: 1px solid #97c459; border-radius: 14px; padding: 1.25rem; margin-top: 1rem; }
-.result-title { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
-.result-prob { font-size: 28px; font-weight: 700; letter-spacing: -1px; }
 .ai-insight { background: white; border: 1px solid #e0ece0; border-radius: 12px; padding: 1rem; margin-top: 1rem; }
 .ai-insight-header { font-size: 11px; font-weight: 600; color: #639922; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
 .ai-insight-text { font-size: 13px; color: #3a4a3a; line-height: 1.7; }
@@ -50,7 +47,7 @@ st.markdown("""
         <div class="topbar-title">🫀 Heart Disease Prediction</div>
         <div class="topbar-sub">ML-powered cardiac risk analysis using Random Forest</div>
     </div>
-    <div class="ai-badge"><span class="ai-dot"></span> Groq AI Active</div>
+    <div class="ai-badge"><span class="ai-dot"></span> FastAPI + Groq AI Active</div>
 </div>
 <div class="stats-row">
     <div class="stat-card">
@@ -77,81 +74,87 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-with st.container():
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        id = st.number_input("Patient ID", value=1)
-        age = st.number_input("Age", min_value=1, max_value=120, value=50)
-        sex = st.selectbox("Sex", ["Male", "Female"])
-        dataset = st.selectbox("Dataset Source", [0, 1, 2, 3])
-        cp = st.selectbox("Chest Pain Type", [0, 1, 2, 3])
-    with col2:
-        trestbps = st.number_input("Resting Blood Pressure", value=120)
-        chol = st.number_input("Cholesterol", value=200)
-        fbs = st.selectbox("Fasting Blood Sugar > 120mg/dl", [0, 1])
-        restecg = st.selectbox("Resting ECG", [0, 1, 2])
-        thalach = st.number_input("Max Heart Rate", value=150)
-    with col3:
-        exang = st.selectbox("Exercise Induced Angina", [0, 1])
-        oldpeak = st.number_input("ST Depression", value=0.0)
-        slope = st.selectbox("Slope", [0, 1, 2])
-        ca = st.selectbox("Number of Major Vessels", [0, 1, 2, 3])
-        thal = st.selectbox("Thal", [0, 1, 2, 3])
+col1, col2, col3 = st.columns(3)
+with col1:
+    id = st.number_input("Patient ID", value=1)
+    age = st.number_input("Age", min_value=1, max_value=120, value=50)
+    sex = st.selectbox("Sex", ["Male", "Female"])
+    dataset = st.selectbox("Dataset Source", [0, 1, 2, 3])
+    cp = st.selectbox("Chest Pain Type", [0, 1, 2, 3])
+with col2:
+    trestbps = st.number_input("Resting Blood Pressure", value=120)
+    chol = st.number_input("Cholesterol", value=200)
+    fbs = st.selectbox("Fasting Blood Sugar > 120mg/dl", [0, 1])
+    restecg = st.selectbox("Resting ECG", [0, 1, 2])
+    thalach = st.number_input("Max Heart Rate", value=150)
+with col3:
+    exang = st.selectbox("Exercise Induced Angina", [0, 1])
+    oldpeak = st.number_input("ST Depression", value=0.0)
+    slope = st.selectbox("Slope", [0, 1, 2])
+    ca = st.selectbox("Number of Major Vessels", [0, 1, 2, 3])
+    thal = st.selectbox("Thal", [0, 1, 2, 3])
 
 if st.button("⚡ Run AI Analysis"):
-    try:
-        model = joblib.load('models/rf_model.pkl')
-        scaler = joblib.load('models/scaler.pkl')
-        sex_val = 1 if sex == "Male" else 0
-        input_data = np.array([[id, age, sex_val, dataset, cp, trestbps,
-                                 chol, fbs, restecg, thalach, exang,
-                                 oldpeak, slope, ca, thal]])
-        input_scaled = scaler.transform(input_data)
-        prediction = model.predict(input_scaled)
-        probability = model.predict_proba(input_scaled)[0][1]
-
-        if prediction[0] == 1:
-            st.markdown(f"""
-            <div class="result-high">
-                <div class="result-title" style="color:#c0392b">⚠️ High Risk Detected</div>
-                <div class="result-prob" style="color:#c0392b">{probability*100:.1f}%</div>
-                <div style="font-size:12px;color:#7a3a3a;margin-top:4px">Probability of Heart Disease</div>
-            </div>
-            """, unsafe_allow_html=True)
-            risk_level = "high"
-        else:
-            st.markdown(f"""
-            <div class="result-low">
-                <div class="result-title" style="color:#27500a">✅ Low Risk</div>
-                <div class="result-prob" style="color:#27500a">{(1-probability)*100:.1f}%</div>
-                <div style="font-size:12px;color:#3b6d11;margin-top:4px">Probability of Being Healthy</div>
-            </div>
-            """, unsafe_allow_html=True)
-            risk_level = "low"
-
-        with st.spinner("🤖 Getting AI insights..."):
-            client = Groq(api_key=st.secrets["GROQ_API_KEY"])
-            prompt = f"""Patient data: Age={age}, Sex={sex}, Chest Pain Type={cp},
-            Blood Pressure={trestbps}, Cholesterol={chol}, Max Heart Rate={thalach},
-            ST Depression={oldpeak}, Major Vessels={ca}.
-            Heart disease risk is {risk_level} ({probability*100:.1f}% probability).
-            Give a brief 3-4 sentence professional medical insight about this result,
-            key risk factors, and specific lifestyle recommendations. Be concise and clear.
-            End with: Always consult a qualified cardiologist."""
-            response = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=200
+    with st.spinner("🤖 FastAPI processing..."):
+        try:
+            sex_val = 1 if sex == "Male" else 0
+            response = requests.post(
+                f"{API_URL}/predict/heart",
+                json={
+                    "id": float(id),
+                    "age": float(age),
+                    "sex": sex_val,
+                    "dataset": int(dataset),
+                    "cp": int(cp),
+                    "trestbps": float(trestbps),
+                    "chol": float(chol),
+                    "fbs": int(fbs),
+                    "restecg": int(restecg),
+                    "thalach": float(thalach),
+                    "exang": int(exang),
+                    "oldpeak": float(oldpeak),
+                    "slope": int(slope),
+                    "ca": int(ca),
+                    "thal": int(thal)
+                },
+                timeout=30
             )
-            insight = response.choices[0].message.content
-            st.markdown(f"""
-            <div class="ai-insight">
-                <div class="ai-insight-header">🤖 AI Medical Insight</div>
-                <div class="ai-insight-text">{insight}</div>
-            </div>
-            """, unsafe_allow_html=True)
+            result = response.json()
 
-        st.markdown('<div class="disclaimer">⚠️ For educational purposes only. Always consult a qualified doctor.</div>', unsafe_allow_html=True)
+            if "error" in result:
+                st.error(f"API Error: {result['error']}")
+            else:
+                prediction = result["prediction"]
+                probability = result["probability"]
 
-    except Exception as e:
-        st.error(f"Error: {e}")
+                if prediction == 1:
+                    st.markdown(f"""
+                    <div class="result-high">
+                        <div style="font-size:16px;font-weight:700;color:#c0392b">⚠️ High Risk Detected</div>
+                        <div style="font-size:28px;font-weight:700;color:#c0392b">{probability*100:.1f}%</div>
+                        <div style="font-size:12px;color:#7a3a3a;margin-top:4px">Probability of Heart Disease</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    st.markdown(f"""
+                    <div class="result-low">
+                        <div style="font-size:16px;font-weight:700;color:#27500a">✅ Low Risk</div>
+                        <div style="font-size:28px;font-weight:700;color:#27500a">{(1-probability)*100:.1f}%</div>
+                        <div style="font-size:12px;color:#3b6d11;margin-top:4px">Probability of Being Healthy</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                if "ai_insight" in result:
+                    st.markdown(f"""
+                    <div class="ai-insight">
+                        <div class="ai-insight-header">🤖 AI Medical Insight (via FastAPI)</div>
+                        <div class="ai-insight-text">{result['ai_insight']}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+        except requests.exceptions.Timeout:
+            st.error("⏱️ API timeout — please try again")
+        except Exception as e:
+            st.error(f"Error: {e}")
+
+    st.markdown('<div class="disclaimer">⚠️ For educational purposes only. Always consult a qualified doctor.</div>', unsafe_allow_html=True)
