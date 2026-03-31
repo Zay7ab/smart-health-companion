@@ -11,26 +11,28 @@ API_URL = st.secrets.get("API_BASE_URL", "https://zay7ab-health-ai-api.hf.space"
 
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 * { font-family: 'Inter', sans-serif; }
-.stApp { background: #f0f4f0 !important; }
-.topbar { background: white; border: 1px solid #e0ece0; border-radius: 16px; padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between; }
-.topbar-title { font-size: 20px; font-weight: 700; color: #1a3a1a; }
-.topbar-sub { font-size: 12px; color: #639922; margin-top: 2px; }
-.ai-badge { display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg,#eaf3de,#d4edbe); border: 1px solid #97c459; border-radius: 20px; padding: 5px 12px; font-size: 11px; color: #27500a; font-weight: 600; }
-.ai-dot { width: 6px; height: 6px; border-radius: 50%; background: #639922; display: inline-block; }
-.tip-card { background: white; border: 1px solid #e0ece0; border-radius: 14px; padding: 1.25rem; margin-bottom: 10px; display: flex; gap: 1rem; align-items: flex-start; }
-.tip-number { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg,#eaf3de,#d4edbe); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #27500a; flex-shrink: 0; }
-.tip-content { flex: 1; }
-.tip-title { font-size: 13px; font-weight: 600; color: #1a3a1a; margin-bottom: 4px; }
-.tip-text { font-size: 12px; color: #5a6b5a; line-height: 1.6; }
-.daily-tip { background: linear-gradient(135deg,#1a3a1a,#2d5a1a); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.25rem; }
-.daily-tip-label { font-size: 10px; color: #97c459; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
-.daily-tip-text { font-size: 14px; color: white; line-height: 1.7; }
-.disclaimer { background: #fff8e1; border: 1px solid #f0c040; border-radius: 10px; padding: 0.75rem 1rem; font-size: 11px; color: #7a6000; margin-top: 1rem; }
-div[data-testid="stButton"] button { background: linear-gradient(135deg,#3b6d11,#639922) !important; color: white !important; border: none !important; border-radius: 8px !important; font-weight: 600 !important; font-size: 13px !important; padding: 0.6rem 1.5rem !important; }
-label { color: #1a3a1a !important; }
-p { color: #1a3a1a !important; }
+.stApp { background: #0a0f0a !important; }
+.topbar { background: #0d120d; border: 1px solid #1a2e1a; border-radius: 16px; padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between; }
+.topbar-title { font-size: 20px; font-weight: 700; color: #ffffff; }
+.topbar-sub { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+.ai-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(74,222,128,0.1); border: 1px solid rgba(74,222,128,0.2); border-radius: 20px; padding: 5px 12px; font-size: 11px; color: #4ade80; font-weight: 600; }
+.ai-dot { width: 6px; height: 6px; border-radius: 50%; background: #4ade80; display: inline-block; animation: blink 2s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.daily-tip { background: linear-gradient(135deg,#0d1f0d,#0f2510); border: 1px solid #1a3a1a; border-radius: 16px; padding: 1.5rem; margin-bottom: 1.25rem; }
+.daily-tip-label { font-size: 10px; color: #4ade80; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+.daily-tip-text { font-size: 14px; color: rgba(255,255,255,0.8); line-height: 1.7; }
+.tip-card { background: #0d120d; border: 1px solid #1a2e1a; border-radius: 14px; padding: 1.25rem; margin-bottom: 10px; display: flex; gap: 1rem; align-items: flex-start; transition: all 0.2s; }
+.tip-card:hover { border-color: #4ade80; background: #0f1a0f; }
+.tip-number { width: 32px; height: 32px; border-radius: 50%; background: rgba(74,222,128,0.1); border: 1px solid rgba(74,222,128,0.2); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #4ade80; flex-shrink: 0; }
+.tip-title { font-size: 13px; font-weight: 600; color: #ffffff; margin-bottom: 4px; }
+.tip-text { font-size: 12px; color: rgba(255,255,255,0.5); line-height: 1.6; }
+.disclaimer { background: rgba(255,200,0,0.05); border: 1px solid rgba(255,200,0,0.15); border-radius: 10px; padding: 0.75rem 1rem; font-size: 11px; color: rgba(255,200,0,0.7); margin-top: 1rem; }
+div[data-testid="stButton"] button { background: linear-gradient(135deg,#166534,#4ade80) !important; color: #0a0f0a !important; border: none !important; border-radius: 8px !important; font-weight: 700 !important; font-size: 13px !important; padding: 0.6rem 1.5rem !important; }
+label { color: rgba(255,255,255,0.7) !important; }
+p { color: rgba(255,255,255,0.5) !important; }
+.stSelectbox > div > div { background: #0f1a0f !important; border-color: #1a2e1a !important; color: white !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -44,16 +46,10 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Daily tip
 if "daily_tip" not in st.session_state:
     try:
-        response = requests.post(
-            f"{API_URL}/tips/daily",
-            json={"api_key": st.secrets.get("GROQ_API_KEY", "")},
-            timeout=30
-        )
-        result = response.json()
-        st.session_state.daily_tip = result.get("tip", "Stay hydrated and exercise daily!")
+        response = requests.post(f"{API_URL}/tips/daily", json={"api_key": st.secrets.get("GROQ_API_KEY", "")}, timeout=30)
+        st.session_state.daily_tip = response.json().get("tip", "Stay hydrated and exercise daily!")
     except:
         st.session_state.daily_tip = "Drink a glass of water first thing in the morning to kickstart your metabolism."
 
@@ -81,25 +77,16 @@ categories = {
 
 st.markdown("### 🔍 Select a Health Category")
 category = st.selectbox("Category", list(categories.keys()), label_visibility="collapsed")
-
 col1, col2 = st.columns([3, 1])
 with col1:
-    age_group = st.selectbox("Age Group", ["18-25", "26-35", "36-45", "46-55", "55+"])
+    age_group = st.selectbox("Age Group", ["18-25","26-35","36-45","46-55","55+"])
 with col2:
     generate = st.button("⚡ Generate AI Tips")
 
 if generate:
     with st.spinner("🤖 FastAPI generating tips..."):
         try:
-            response = requests.post(
-                f"{API_URL}/tips/generate",
-                json={
-                    "category": categories[category],
-                    "age_group": age_group,
-                    "api_key": st.secrets.get("GROQ_API_KEY", "")
-                },
-                timeout=30
-            )
+            response = requests.post(f"{API_URL}/tips/generate", json={"category": categories[category], "age_group": age_group, "api_key": st.secrets.get("GROQ_API_KEY", "")}, timeout=30)
             result = response.json()
             st.session_state.tips_result = result.get("tips", "")
             st.session_state.tips_category = category
@@ -112,7 +99,6 @@ if "tips_result" in st.session_state:
     tip_num = 0
     current_title = ""
     current_text = ""
-
     for line in lines:
         line = line.strip()
         if not line:
@@ -120,30 +106,13 @@ if "tips_result" in st.session_state:
         if line.startswith("TITLE:"):
             if current_title and current_text:
                 tip_num += 1
-                st.markdown(f"""
-                <div class="tip-card">
-                    <div class="tip-number">{tip_num}</div>
-                    <div class="tip-content">
-                        <div class="tip-title">{current_title}</div>
-                        <div class="tip-text">{current_text}</div>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
+                st.markdown(f'<div class="tip-card"><div class="tip-number">{tip_num}</div><div><div class="tip-title">{current_title}</div><div class="tip-text">{current_text}</div></div></div>', unsafe_allow_html=True)
             current_title = line.replace("TITLE:", "").strip()
             current_text = ""
         elif line.startswith("TIP:"):
             current_text = line.replace("TIP:", "").strip()
-
     if current_title and current_text:
         tip_num += 1
-        st.markdown(f"""
-        <div class="tip-card">
-            <div class="tip-number">{tip_num}</div>
-            <div class="tip-content">
-                <div class="tip-title">{current_title}</div>
-                <div class="tip-text">{current_text}</div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(f'<div class="tip-card"><div class="tip-number">{tip_num}</div><div><div class="tip-title">{current_title}</div><div class="tip-text">{current_text}</div></div></div>', unsafe_allow_html=True)
 
 st.markdown('<div class="disclaimer">⚠️ For educational purposes only. Always consult a qualified doctor.</div>', unsafe_allow_html=True)
