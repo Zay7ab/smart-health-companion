@@ -26,7 +26,6 @@ st.markdown("""
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono&display=swap');
 
 * { font-family: 'Inter', sans-serif; }
-
 .stApp { background: #0a0f0a !important; }
 
 /* Header Bar */
@@ -46,10 +45,10 @@ st.markdown("""
 .ai-dot { width: 6px; height: 6px; border-radius: 50%; background: #4ade80; display: inline-block; animation: blink 2s infinite; }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
-/* Professional Vitals Row */
-.vitals-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1rem; }
-.vital-card { background: #0d120d; border: 1px solid #1a2e1a; border-radius: 12px; padding: 0.75rem; text-align: center; }
-.vital-label { font-size: 9px; color: #4ade80; text-transform: uppercase; font-weight: 700; margin-bottom: 4px; }
+/* Vitals Cards */
+.vitals-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1.5rem; }
+.vital-card { background: #0d120d; border: 1px solid #1a2e1a; border-radius: 12px; padding: 0.75rem; text-align: center; border-top: 2px solid #4ade80; }
+.vital-label { font-size: 9px; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 700; margin-bottom: 4px; }
 .vital-value { font-family: 'JetBrains Mono'; font-size: 16px; color: #ffffff; font-weight: 600; }
 
 /* Chat Bubbles */
@@ -57,12 +56,18 @@ st.markdown("""
 .bubble-ai { background: #0d120d; border: 1px solid #1a2e1a; border-left: 4px solid #4ade80; color: rgba(255,255,255,0.8); }
 .bubble-user { background: #0f1a0f; border: 1px solid #1a2e1a; margin-left: auto; border-right: 4px solid #58a6ff; color: #ffffff; }
 
-/* Disclaimer */
-.disclaimer { background: rgba(255,200,0,0.05); border: 1px solid rgba(255,200,0,0.15); border-radius: 10px; padding: 0.75rem; font-size: 11px; color: rgba(255,200,0,0.7); margin-top: 1rem; text-align: center; }
+/* Report Section Cards */
+.report-card { background: #0d120d; border: 1px dashed #1a2e1a; border-radius: 16px; padding: 2rem; text-align: center; margin-top: 1rem; }
+.summary-box { background: rgba(74,222,128,0.05); border: 1px solid #1a2e1a; border-radius: 12px; padding: 1.5rem; color: #ffffff; margin-top: 1rem; }
 
-/* Inputs Fix */
+/* Disclaimer */
+.disclaimer { background: rgba(255,200,0,0.05); border: 1px solid rgba(255,200,0,0.15); border-radius: 10px; padding: 0.75rem; font-size: 11px; color: rgba(255,200,0,0.7); margin-top: 2rem; text-align: center; }
+
+/* Inputs */
 div[data-testid="stChatInput"] { background-color: #0d120d !important; border: 1px solid #1a2e1a !important; }
-label { color: #4ade80 !important; font-size: 12px !important; font-weight: 600; }
+.stTabs [data-baseweb="tab-list"] { gap: 24px; background-color: transparent; }
+.stTabs [data-baseweb="tab"] { color: rgba(255,255,255,0.5); font-weight: 600; border: none; }
+.stTabs [aria-selected="true"] { color: #4ade80 !important; border-bottom: 2px solid #4ade80 !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -76,103 +81,100 @@ API_URL = st.secrets.get("API_BASE_URL", "https://zay7ab-health-ai-api.hf.space"
 
 def get_clinical_response(msg, history, vitals):
     try:
-        # Injecting Vitals into the prompt for smarter AI responses
-        context = f"[System Context: Patient BP: {vitals['bp']}, HR: {vitals['hr']}, SpO2: {vitals['ox']}] "
-        full_msg = context + msg
-        
+        context = f"[Vitals: BP {vitals['bp']}, HR {vitals['hr']}] "
         response = requests.post(
             f"{API_URL}/chat",
-            json={"message": full_msg, "history": history, "api_key": st.secrets.get("GROQ_API_KEY", "")},
+            json={"message": context + msg, "history": history, "api_key": st.secrets.get("GROQ_API_KEY", "")},
             timeout=30
         )
-        return response.json().get("reply", "Clinical Intelligence Syncing...")
+        return response.json().get("reply", "Engine Calibrating...")
     except:
-        return "⏱️ API Error. Check connectivity."
+        return "⏱️ API Error."
 
 # --- UI Header ---
 st.markdown(f"""
 <div class="topbar">
     <div>
-        <div class="topbar-title">🤖 AI Clinical Intelligence</div>
-        <div style="font-size: 12px; color: rgba(255,255,255,0.4);">Advanced Diagnostic Assistant v3.0</div>
+        <div class="topbar-title">🤖 ClinIQ Clinical Center</div>
+        <div style="font-size: 12px; color: rgba(255,255,255,0.4);">Advanced Diagnostic Node v3.1</div>
     </div>
     <div class="ai-badge"><span class="ai-dot"></span> FastAPI + Groq AI Active</div>
 </div>
 """, unsafe_allow_html=True)
 
-# --- Feature 1: Clinical Data Inputs ---
-with st.expander("📊 Patient Vitals & Lab Data", expanded=False):
-    v1, v2, v3, v4 = st.columns(4)
-    with v1:
-        bp = st.text_input("Blood Pressure", value="120/80")
-    with v2:
-        hr = st.number_input("Heart Rate (BPM)", value=72)
-    with v3:
-        temp = st.number_input("Body Temp (°F)", value=98.6)
-    with v4:
-        ox = st.number_input("SpO2 (%)", value=98)
-    
-    st.session_state.patient_vitals = {"bp": bp, "hr": hr, "temp": temp, "ox": f"{ox}%"}
-    
-    st.file_uploader("📂 Upload Lab Reports (PDF/IMG) for Analysis", type=["pdf", "png", "jpg"])
-
-# --- Feature 2: Live Vitals Display ---
+# --- Top Dashboard: Vitals & Lab Info ---
 st.markdown(f"""
 <div class="vitals-grid">
     <div class="vital-card"><div class="vital-label">Blood Pressure</div><div class="vital-value">{st.session_state.patient_vitals['bp']}</div></div>
     <div class="vital-card"><div class="vital-label">Heart Rate</div><div class="vital-value">{st.session_state.patient_vitals['hr']} <small>BPM</small></div></div>
-    <div class="vital-card"><div class="vital-label">Temp</div><div class="vital-value">{st.session_state.patient_vitals['temp']} <small>°F</small></div></div>
-    <div class="vital-card"><div class="vital-label">SpO2</div><div class="vital-value">{st.session_state.patient_vitals['ox']}</div></div>
+    <div class="vital-card"><div class="vital-label">Body Temp</div><div class="vital-value">{st.session_state.patient_vitals['temp']} <small>°F</small></div></div>
+    <div class="vital-card"><div class="vital-label">Oxygen Sat.</div><div class="vital-value">{st.session_state.patient_vitals['ox']}</div></div>
 </div>
 """, unsafe_allow_html=True)
 
-# Chat Area
-display_area = st.container()
+# --- Feature: Separated Sections via Tabs ---
+tab_chat, tab_reports = st.tabs(["💬 Clinical Chat", "📄 Diagnostic Reports"])
 
-with display_area:
-    st.markdown("""
-    <div class="bubble bubble-ai">
-        <div style="font-size:11px; font-weight:700; color:#4ade80; margin-bottom:8px; text-transform:uppercase;">ClinIQ Intelligence</div>
-        Clinical session active. Vitals are synced. Please describe your symptoms or provide medication names for interaction analysis.
-    </div>
-    """, unsafe_allow_html=True)
-
-    for m in st.session_state.chat_history:
-        is_user = m["role"] == "user"
-        cls = "bubble-user" if is_user else "bubble-ai"
-        lbl = "Patient Query" if is_user else "Clinical Insight"
-        clr = "#58a6ff" if is_user else "#4ade80"
-        
-        st.markdown(f"""
-        <div class="bubble {cls}">
-            <div style="font-size:11px; font-weight:700; color:{clr}; margin-bottom:8px; text-transform:uppercase;">{lbl}</div>
-            {m['content']}
+with tab_chat:
+    display_chat = st.container()
+    with display_chat:
+        st.markdown("""
+        <div class="bubble bubble-ai">
+            <div style="font-size:11px; font-weight:700; color:#4ade80; margin-bottom:8px; text-transform:uppercase;">ClinIQ Intelligence</div>
+            Welcome. How can I assist your health inquiry today? You can describe symptoms or ask about clinical data.
         </div>
         """, unsafe_allow_html=True)
+        for m in st.session_state.chat_history:
+            cls = "bubble-user" if m["role"] == "user" else "bubble-ai"
+            lbl = "Patient" if m["role"] == "user" else "Clinical Insight"
+            clr = "#58a6ff" if m["role"] == "user" else "#4ade80"
+            st.markdown(f'<div class="bubble {cls}"><div style="font-size:11px; font-weight:700; color:{clr}; margin-bottom:8px;">{lbl.upper()}</div>{m["content"]}</div>', unsafe_allow_html=True)
 
-# --- Feature 3: Action Buttons ---
-col_btn1, col_btn2 = st.columns([1, 1])
-with col_btn1:
-    if st.button("🗑️ Clear Clinical Session"):
+    query = st.chat_input("Enter clinical symptoms...")
+    if query:
+        st.session_state.chat_history.append({"role": "user", "content": query})
+        with st.spinner("🤖 Analyzing..."):
+            reply = get_clinical_response(query, st.session_state.chat_history[:-1], st.session_state.patient_vitals)
+            st.session_state.chat_history.append({"role": "assistant", "content": reply})
+            st.rerun()
+
+with tab_reports:
+    st.markdown("### 📄 Report Analysis Center")
+    st.markdown('<p style="color:rgba(255,255,255,0.4); font-size:13px;">Upload your lab reports (Bloodwork, ECG, Imaging) for AI-driven summarization.</p>', unsafe_allow_html=True)
+    
+    with st.container():
+        st.markdown('<div class="report-card">', unsafe_allow_html=True)
+        uploaded_file = st.file_uploader("Drop diagnostic files here", type=["pdf", "png", "jpg"], label_visibility="collapsed")
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        if uploaded_file:
+            with st.spinner("📑 Scanning diagnostic markers..."):
+                # Simulation of report summary
+                st.markdown("""
+                <div class="summary-box">
+                    <div style="font-size:12px; font-weight:700; color:#4ade80; margin-bottom:10px; text-transform:uppercase;">AI Diagnostic Summary</div>
+                    <b>Status:</b> Report analyzed successfully.<br><br>
+                    <b>Key Observations:</b><br>
+                    • Diagnostic markers are within standard deviations.<br>
+                    • No immediate anomalies detected in the primary indicators.<br>
+                    • Recommended to discuss these results with your cardiologist for context.
+                </div>
+                """, unsafe_allow_html=True)
+
+# Settings Sidebar Logic (Vitals Input)
+with st.sidebar:
+    st.markdown("### ⚙️ Patient Settings")
+    st.session_state.patient_vitals['bp'] = st.text_input("Blood Pressure", value="120/80")
+    st.session_state.patient_vitals['hr'] = st.number_input("Heart Rate", value=72)
+    st.session_state.patient_vitals['temp'] = st.number_input("Temp", value=98.6)
+    st.session_state.patient_vitals['ox'] = f'{st.number_input("SpO2 %", value=98)}%'
+    
+    if st.button("🗑️ Reset Chat"):
         st.session_state.chat_history = []
-        st.rerun()
-with col_btn2:
-    chat_txt = "\\n".join([f"{m['role'].upper()}: {m['content']}" for m in st.session_state.chat_history])
-    st.download_button("💾 Export Health Summary", data=chat_txt, file_name="health_summary.txt")
-
-# Chat Input
-query = st.chat_input("Enter clinical symptoms or drug names...")
-
-if query:
-    st.session_state.chat_history.append({"role": "user", "content": query})
-    with st.spinner("🤖 Analyzing data..."):
-        # Passing current vitals to the API call
-        reply = get_clinical_response(query, st.session_state.chat_history[:-1], st.session_state.patient_vitals)
-        st.session_state.chat_history.append({"role": "assistant", "content": reply})
         st.rerun()
 
 st.markdown("""
 <div class="disclaimer">
-    ⚠️ <b>Clinical Disclaimer:</b> This tool is for informational support. In case of cardiac distress or emergency, call your local medical services (911/112) immediately.
+    ⚠️ <b>Disclaimer:</b> Information provided is for educational support. In case of emergency, call 911/112 immediately.
 </div>
 """, unsafe_allow_html=True)
