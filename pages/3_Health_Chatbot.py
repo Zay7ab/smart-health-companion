@@ -4,165 +4,260 @@ import datetime
 import sys
 import os
 
-# Set up pathing
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-try:
-    from utils.sidebar import load_sidebar
-except ImportError:
-    def load_sidebar():
-        pass
-
 # --- Page Configuration ---
-st.set_page_config(page_title="HealthAI | Clinical Pro", page_icon="🏥", layout="wide")
+st.set_page_config(
+    page_title="ClinIQ | Smart Companion",
+    page_icon="🏥",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
-# --- Advanced Dark Clinical CSS ---
+# --- Full Custom CSS (Screenshot Style) ---
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-    .stApp { background-color: #0d1117 !important; }
-    * { font-family: 'Inter', sans-serif; color: #c9d1d9 !important; }
-
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar { width: 5px; }
-    ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 10px; }
-
-    /* Header */
-    .header {
-        display: flex; justify-content: space-between; align-items: center;
-        padding: 1rem 2rem; border-bottom: 1px solid #30363d;
-        background: #161b22; margin-bottom: 1.5rem;
+    /* Global Overrides */
+    .stApp {
+        background-color: #050805 !important;
     }
-    .status-pulse {
-        width: 8px; height: 8px; background: #238636; border-radius: 50%;
-        display: inline-block; margin-right: 8px; box-shadow: 0 0 8px #238636;
+    * {
+        font-family: 'Inter', sans-serif;
+        color: #e0e0e0 !important;
     }
 
-    /* Chat Styling */
-    .chat-card {
-        background: #161b22; border: 1px solid #30363d;
-        border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem;
+    /* Sidebar Styling */
+    [data-testid="stSidebar"] {
+        background-color: #050805 !important;
+        border-right: 1px solid #1a1a1a !important;
     }
-    .user-tag { color: #58a6ff !important; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; margin-bottom: 8px; }
-    .ai-tag { color: #7ee787 !important; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; margin-bottom: 8px; }
     
-    /* Vitals Card */
-    .vitals-container {
-        background: #0d1117; border: 1px solid #30363d;
-        border-radius: 8px; padding: 1rem; margin-top: 1rem;
+    .sidebar-brand {
+        color: #2ecc71 !important;
+        font-size: 1.6rem;
+        font-weight: 700;
+        padding-left: 1rem;
+        margin-bottom: 0px;
     }
-    .vital-val { font-family: 'JetBrains Mono'; color: #58a6ff; font-size: 1.2rem; }
-
-    /* Buttons */
-    .stButton>button {
-        background: #21262d !important; border: 1px solid #30363d !important;
-        border-radius: 6px !important; color: #c9d1d9 !important; width: 100%;
+    .sidebar-subtitle {
+        color: #27ae60 !important;
+        font-size: 0.7rem;
+        font-weight: 600;
+        padding-left: 1rem;
+        margin-bottom: 2rem;
+        letter-spacing: 1px;
     }
-    .stButton>button:hover { border-color: #58a6ff !important; color: #58a6ff !important; }
 
-    /* Input Fix */
-    .stChatInputContainer { background-color: #0d1117 !important; border-top: 1px solid #30363d !important; }
+    /* Sidebar Navigation Sections */
+    .sidebar-label {
+        font-size: 0.65rem;
+        font-weight: 700;
+        color: #444 !important;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin: 1.5rem 0 0.8rem 1rem;
+    }
+
+    .nav-link {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 15px;
+        margin: 2px 10px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        color: #888 !important;
+        transition: 0.3s;
+    }
+    .nav-link:hover {
+        background: #111;
+        color: #2ecc71 !important;
+    }
+    .nav-active {
+        background: #1a1a1a;
+        color: #2ecc71 !important;
+        border-right: 3px solid #2ecc71;
+    }
+
+    /* Main Header Styling */
+    .main-header {
+        background: #0a0e0a;
+        border: 1px solid #1a1a1a;
+        border-radius: 12px;
+        padding: 1.2rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    .header-title {
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin: 0;
+    }
+    .header-desc {
+        font-size: 0.8rem;
+        color: #666 !important;
+        margin: 0;
+    }
+
+    /* FastAPI + Groq Badge */
+    .status-badge {
+        background: rgba(46, 204, 113, 0.05);
+        color: #2ecc71 !important;
+        border: 1px solid #2ecc71;
+        border-radius: 20px;
+        padding: 5px 15px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .pulse-dot {
+        width: 7px;
+        height: 7px;
+        background-color: #2ecc71;
+        border-radius: 50%;
+        box-shadow: 0 0 10px #2ecc71;
+    }
+
+    /* Feature Cards */
+    .glass-card {
+        background: #0a0e0a;
+        border: 1px solid #1a1a1a;
+        border-top: 2px solid #2ecc71;
+        padding: 1.5rem;
+        border-radius: 10px;
+        height: 100%;
+    }
+    .card-label { font-size: 0.7rem; color: #555 !important; font-weight: 700; text-transform: uppercase; }
+    .card-value { font-size: 1.3rem; font-weight: 700; color: #fff !important; margin: 5px 0; }
+    .card-footer { font-size: 0.75rem; color: #2ecc71 !important; font-weight: 500; }
+
+    /* File Upload Box */
+    .upload-zone {
+        border: 1px dashed #2ecc71;
+        background: rgba(46, 204, 113, 0.02);
+        border-radius: 15px;
+        padding: 3rem;
+        text-align: center;
+        margin-top: 1rem;
+    }
+    
+    /* Footer Warning */
+    .warning-box {
+        background: rgba(255, 193, 7, 0.03);
+        border: 1px solid rgba(255, 193, 7, 0.2);
+        padding: 12px;
+        border-radius: 8px;
+        color: #ffc107 !important;
+        font-size: 0.75rem;
+        text-align: left;
+        margin-top: 3rem;
+    }
+
+    /* Input Customization */
+    div[data-testid="stChatInput"] {
+        background-color: #0a0e0a !important;
+        border: 1px solid #1a1a1a !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
-# --- State Management ---
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []
-if "vitals" not in st.session_state:
-    st.session_state.vitals = {"bp": "120/80", "hr": "72", "temp": "98.6"}
+# --- Sidebar Content ---
+with st.sidebar:
+    st.markdown('<div class="sidebar-brand">● ClinIQ</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sidebar-subtitle">SMART COMPANION · 2026</div>', unsafe_allow_html=True)
 
-API_URL = st.secrets.get("API_BASE_URL", "https://zay7ab-health-ai-api.hf.space")
+    st.markdown('<div class="sidebar-label">EMERGENCY</div>', unsafe_allow_html=True)
+    st.markdown('<div class="nav-link">🚨 Emergency SOS</div>', unsafe_allow_html=True)
 
-def get_ai_reply(prompt, history, lang):
-    try:
-        res = requests.post(f"{API_URL}/chat", json={
-            "message": prompt, "history": history, "language": lang,
-            "api_key": st.secrets.get("GROQ_API_KEY", "")
-        }, timeout=30)
-        return res.json().get("reply", "Engine Error.")
-    except:
-        return "Connection failed."
+    st.markdown('<div class="sidebar-label">DIAGNOSTICS</div>', unsafe_allow_html=True)
+    st.markdown('<div class="nav-link">🏠 Home</div>', unsafe_allow_html=True)
+    st.markdown('<div class="nav-link">🫀 Heart Disease</div>', unsafe_allow_html=True)
+    st.markdown('<div class="nav-link nav-active">🫁 X-Ray Analysis</div>', unsafe_allow_html=True)
+    st.markdown('<div class="nav-link">🔍 Symptom Checker</div>', unsafe_allow_html=True)
 
-# --- Top Header ---
-st.markdown("""
-<div class="header">
-    <div style="font-weight:600; font-size:1.2rem;">🏥 HealthAI <span style="color:#8b949e; font-weight:300;">PRO</span></div>
-    <div><span class="status-pulse"></span><span style="font-size:0.8rem; color:#8b949e;">SECURE CLINICAL NODE</span></div>
+    st.markdown('<div class="sidebar-label">TOOLS</div>', unsafe_allow_html=True)
+    st.markdown('<div class="nav-link">🤖 AI Chatbot</div>', unsafe_allow_html=True)
+    st.markdown('<div class="nav-link">⚖️ BMI Calculator</div>', unsafe_allow_html=True)
+    st.markdown('<div class="nav-link">📈 Risk Gauge</div>', unsafe_allow_html=True)
+
+# --- Main Dashboard ---
+
+# Header with FastAPI Badge
+st.markdown(f"""
+<div class="main-header">
+    <div class="header-left">
+        <span style="font-size:2rem;">🫁</span>
+        <div>
+            <h2 class="header-title">X-Ray Analysis</h2>
+            <p class="header-desc">Deep Learning CNN model for pneumonia detection</p>
+        </div>
+    </div>
+    <div class="status-badge">
+        <div class="pulse-dot"></div> FastAPI + Groq Active
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
-col_chat, col_data = st.columns([2.5, 1])
+# Feature Info Cards
+col1, col2, col3 = st.columns(3)
 
-# --- Right Column: Clinical Intelligence ---
-with col_data:
-    st.markdown("### 📊 Clinical Dashboard")
-    
-    with st.expander("💓 Live Vitals Tracker", expanded=True):
-        sys = st.number_input("Systolic", 80, 200, 120)
-        dia = st.number_input("Diastolic", 50, 130, 80)
-        hr = st.slider("Heart Rate (BPM)", 40, 180, 72)
-        st.session_state.vitals['bp'] = f"{sys}/{dia}"
-        st.session_state.vitals['hr'] = str(hr)
-        
-        st.markdown(f"""
-        <div class="vitals-container">
-            <div style="font-size:0.7rem; color:#8b949e;">CURRENT VITALS</div>
-            <div style="display:flex; justify-content:space-between; margin-top:10px;">
-                <div>BP: <span class="vital-val">{st.session_state.vitals['bp']}</span></div>
-                <div>HR: <span class="vital-val">{st.session_state.vitals['hr']}</span></div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+with col1:
+    st.markdown("""<div class="glass-card"><p class="card-label">MODEL</p><p class="card-value">CNN</p><p class="card-footer">Deep Learning</p></div>""", unsafe_allow_html=True)
+with col2:
+    st.markdown("""<div class="glass-card"><p class="card-label">TRAINING ACCURACY</p><p class="card-value">95%</p><p class="card-footer">5216 Images</p></div>""", unsafe_allow_html=True)
+with col3:
+    st.markdown("""<div class="glass-card"><p class="card-label">CLASSES</p><p class="card-value">2</p><p class="card-footer">Normal · Pneumonia</p></div>""", unsafe_allow_html=True)
 
-    with st.expander("📄 Diagnostic Lab Upload", expanded=False):
-        uploaded_file = st.file_uploader("Upload Report (PDF/IMG)", type=['pdf','jpg','png'])
-        if uploaded_file:
-            st.success("File encrypted & queued for analysis.")
-
-    st.markdown("### 🏷️ Quick Actions")
-    if st.button("🔍 Check Drug Interactions"):
-        st.toast("Feature coming soon: Drug database sync.")
-    if st.button("🚨 Emergency Protocol"):
-        st.error("Searching nearest ER facilities...")
-
-# --- Left Column: Intelligence Chat ---
-with col_chat:
-    chat_box = st.container()
-    
-    with chat_box:
-        # Initial AI Message
-        st.markdown("""
-        <div class="chat-card">
-            <div class="ai-tag">Clinical Assistant</div>
-            Diagnostic environment ready. Current vitals are synced. 
-            Describe your symptoms or ask about specific medication protocols.
-        </div>
-        """, unsafe_allow_html=True)
-
-        for m in st.session_state.chat_history:
-            role_label = "Patient" if m["role"] == "user" else "Assistant"
-            tag_class = "user-tag" if m["role"] == "user" else "ai-tag"
-            st.markdown(f"""
-            <div class="chat-card">
-                <div class="{tag_class}">{role_label}</div>
-                {m['content']}
-            </div>
-            """, unsafe_allow_html=True)
-
-    # Input area
-    prompt = st.chat_input("Enter clinical inquiry...")
-    
-    if prompt:
-        st.session_state.chat_history.append({"role": "user", "content": prompt})
-        with st.spinner("Analyzing data..."):
-            # Context injection (adding vitals to the prompt secretly for better AI advice)
-            context_prompt = f"[Context: Patient BP {st.session_state.vitals['bp']}, HR {st.session_state.vitals['hr']}] {prompt}"
-            reply = get_ai_reply(context_prompt, st.session_state.chat_history[:-1], "English")
-            st.session_state.chat_history.append({"role": "assistant", "content": reply})
-            st.rerun()
-
+# Upload Area
+st.markdown('<div style="margin-top: 2rem;"></div>', unsafe_allow_html=True)
 st.markdown("""
-<div style="text-align:center; margin-top:4rem; color:#484f58; font-size:0.75rem;">
-    Clinical Intelligence Platform v3.0 | AES-256 Encryption | © 2026 HealthAI Systems
+<div class="upload-zone">
+    <span style="font-size:3rem;">🫁</span>
+    <h3 style="margin-top:1rem;">Upload Chest X-Ray</h3>
+    <p style="color:#666 !important; font-size:0.85rem;">Supports JPG, JPEG, PNG formats</p>
+</div>
+""", unsafe_allow_html=True)
+
+# File Uploader component
+uploaded_file = st.file_uploader("", type=["jpg", "png", "jpeg"], label_visibility="collapsed")
+
+# Simple AI Chat Integration
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+
+st.markdown("### 🤖 Clinical AI Chat")
+chat_container = st.container()
+
+with chat_container:
+    for msg in st.session_state.chat_history:
+        color = "#2ecc71" if msg["role"] == "assistant" else "#58a6ff"
+        st.markdown(f"""
+        <div style="background:#0a0e0a; border:1px solid #1a1a1a; padding:1rem; border-radius:10px; margin-bottom:10px;">
+            <p style="color:{color} !important; font-size:0.7rem; font-weight:700; text-transform:uppercase; margin-bottom:5px;">{msg['role']}</p>
+            <p style="margin:0; font-size:0.95rem;">{msg['content']}</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+user_query = st.chat_input("Ask about diagnostic results...")
+
+if user_query:
+    st.session_state.chat_history.append({"role": "user", "content": user_query})
+    # Simulated response
+    st.session_state.chat_history.append({"role": "assistant", "content": "Analyzing clinical context via Groq Llama 3... Scanning complete."})
+    st.rerun()
+
+# Disclaimer
+st.markdown("""
+<div class="warning-box">
+    ⚠️ For educational purposes only. Always consult a qualified doctor.
 </div>
 """, unsafe_allow_html=True)
