@@ -9,7 +9,7 @@ try:
 except ImportError:
     mic_recorder = None
 
-# --- Page Config ---
+# --- Page Configuration ---
 st.set_page_config(
     page_title="ClinIQ | Clinical Intelligence",
     page_icon="🤖",
@@ -17,7 +17,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- Full Dark Neon CSS ---
+# --- CSS for Dark Neon Theme ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono&display=swap');
@@ -34,7 +34,6 @@ st.markdown("""
 .vital-label { font-size: 10px; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 800; margin-bottom: 8px; }
 .vital-value { font-family: 'JetBrains Mono'; font-size: 24px; color: #ffffff; font-weight: 700; }
 .vital-unit { font-size: 14px; color: #ffffff; font-weight: 500; margin-left: 4px; }
-div[data-testid="stPopover"] > button { background: transparent !important; border: 1px solid #1a2e1a !important; color: #4ade80 !important; font-size: 10px !important; border-radius: 20px !important; margin-top: 10px !important; width: 100%; }
 .bubble { padding: 1.25rem; border-radius: 14px; margin-bottom: 1rem; line-height: 1.7; font-size: 14px; max-width: 85%; }
 .bubble-ai { background: #0d120d; border: 1px solid #1a2e1a; border-left: 4px solid #4ade80; color: rgba(255,255,255,0.8); }
 .bubble-user { background: #0f1a0f; border: 1px solid #1a2e1a; margin-left: auto; border-right: 4px solid #58a6ff; color: #ffffff; }
@@ -51,15 +50,16 @@ for key, val in vitals_defaults.items():
         st.session_state[key] = val
 
 API_URL = st.secrets.get("API_BASE_URL", "https://zay7ab-health-ai-api.hf.space")
-GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", "fallback_key")
 
-# --- PDF Export Helper ---
+# --- PDF Export ---
 def export_pdf(history, vitals):
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", 'B', 16)
     pdf.cell(200, 10, "ClinIQ Health Summary Report", ln=True, align='C')
     pdf.ln(10)
+
+    # Vitals
     pdf.set_font("Arial", 'B', 12)
     pdf.cell(0, 10, "Patient Vitals Observation:", ln=True)
     pdf.set_font("Arial", '', 10)
@@ -68,18 +68,21 @@ def export_pdf(history, vitals):
     pdf.cell(0, 8, f"Body Temp: {vitals.get('temp')} F", ln=True)
     pdf.cell(0, 8, f"Oxygen Sat: {vitals.get('ox')}%", ln=True)
     pdf.ln(10)
+
+    # Chat history
     pdf.set_font("Arial", 'B', 12)
     pdf.cell(0, 10, "Clinical Interaction Log:", ln=True)
     pdf.set_font("Arial", '', 10)
     for msg in history:
         role = "PATIENT" if msg["role"] == "user" else "AI ASSISTANT"
-        clean_txt = msg['content'].encode('latin-1', 'ignore').decode('latin-1')
+        clean_txt = msg["content"].encode("latin-1", "ignore").decode("latin-1")
         pdf.multi_cell(0, 8, f"{role}: {clean_txt}")
         pdf.ln(2)
+
     return pdf.output(dest='S').encode('latin-1')
 
-# --- UI Header ---
-st.markdown("""
+# --- Topbar ---
+st.markdown(f"""
 <div class="topbar">
     <div>
         <div class="topbar-title">🤖 ClinIQ Clinical Intelligence</div>
@@ -98,7 +101,6 @@ v_meta = [
     {"label": "Body Temp", "key": "temp", "unit": "°F"},
     {"label": "Oxygen Sat.", "key": "ox", "unit": "%"}
 ]
-
 for i, meta in enumerate(v_meta):
     with v_cols[i]:
         st.markdown(f"""<div class="vital-card-container">
@@ -133,12 +135,10 @@ with tab_chat:
         with st.spinner("🤖 Analyzing clinical context..."):
             context = f"[Context: BP {st.session_state.bp}, HR {st.session_state.hr}, Temp {st.session_state.temp}] "
             try:
-                res = requests.post(f"{API_URL}/chat",
-                    json={"message": context + query, "history": st.session_state.chat_history[:-1], "api_key": GROQ_API_KEY},
-                    timeout=20)
+                res = requests.post(f"{API_URL}/chat", json={"message": context+query, "history": st.session_state.chat_history[:-1]}, timeout=20)
                 res.raise_for_status()
                 reply = res.json().get("reply", "Clinical Intelligence calibrating...")
-            except:
+            except Exception:
                 reply = "⏱️ API Connection Issue. Check your internet or API status."
             st.session_state.chat_history.append({"role": "assistant", "content": reply})
             st.rerun()
@@ -146,76 +146,48 @@ with tab_chat:
 # --- Reports Tab ---
 with tab_reports:
     st.markdown("### 📄 Diagnostic Report Hub")
-    uploaded_report = st.file_uploader("Upload Lab Reports (PDF, PNG, JPG)", type=["pdf","png","jpg"])
-    if uploaded_report and st.button("Run AI Document Analysis"):
-        try:
-            # Try API analysis
-            res = requests.post(f"{API_URL}/analyze-report", files={"file": uploaded_report}, timeout=20)
-            res.raise_for_status()
-            analysis = res.json().get("analysis", "No analysis returned")
-            st.success("✅ Report analyzed successfully!")
-            st.markdown(f"**Analysis Result:** {analysis}")
-        except requests.exceptions.HTTPError:
-            # Local dummy analysis fallback
-            st.warning("⚠️ API endpoint not found. Running local analysis fallback...")
-            st.markdown(f"**File:** {uploaded_report.name}\n**Analysis:** No issues detected (Local Fallback).")
-        except Exception as e:
-            st.error(f"Analysis failed: {e}")
+    uploaded_file = st.file_uploader("Upload Lab Reports (PDF, PNG, JPG)", type=["pdf", "png", "jpg"])
+    if st.button("Run AI Document Analysis"):
+        if uploaded_file:
+            st.info("Scanning report for diagnostic markers...")
+            try:
+                res = requests.post(f"{API_URL}/analyze-report", files={"file": uploaded_file}, timeout=30)
+                res.raise_for_status()
+                analysis = res.json().get("analysis", "No analysis found.")
+                st.success("✅ Analysis Complete")
+                st.json(analysis)
+            except Exception as e:
+                st.error(f"Report analysis failed: {e}")
+        else:
+            st.warning("Please upload a file first.")
 
 # --- Tools Tab ---
 with tab_tools:
     st.markdown("### 🛠️ Professional Utilities")
     c1, c2 = st.columns(2)
     with c1:
-        st.link_button("📍 Find Nearest Hospital", "https://www.google.com/maps/search/hospital+near+me")
+        st.button("📍 Find Nearest Hospital", on_click=lambda: st.experimental_set_query_params(open_map="1"))
     with c2:
         if st.button("📝 Generate Clinical Report"):
-            try:
-                pdf_bytes = export_pdf(st.session_state.chat_history, st.session_state)
-                st.download_button(
-                    label="💾 Download PDF Summary",
-                    data=pdf_bytes,
-                    file_name=f"ClinIQ_Summary_{datetime.date.today()}.pdf",
-                    mime="application/pdf"
-                )
-            except Exception as e:
-                st.error(f"Error generating PDF: {e}")
+            pdf_bytes = export_pdf(st.session_state.chat_history, st.session_state)
+            st.download_button(label="💾 Download PDF Summary", data=pdf_bytes, file_name=f"ClinIQ_Summary_{datetime.date.today()}.pdf", mime="application/pdf")
 
 # --- Sidebar ---
 with st.sidebar:
-    st.markdown(f"""
-    <div style="text-align:center; padding:1.5rem 0; background:#0d120d; border:1px solid #1a2e1a; border-radius:12px; margin-bottom:20px;">
-        <h2 style="color:#4ade80; margin-bottom:0;">📊 STATUS</h2>
-        <p style="color: rgba(255,255,255,0.4); font-size:12px;">Diagnostic Node Active</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    st.markdown(f"""
-    <div style="background:#0f1a0f; padding:15px; border-radius:10px; border-left:3px solid #4ade80;">
-        <div style="color: rgba(255,255,255,0.5); font-size:10px; text-transform:uppercase;">Last Sync Time</div>
-        <div style="color:white; font-size:18px; font-weight:700; font-family:'JetBrains Mono';">
-            {datetime.datetime.now().strftime('%H:%M:%S')}
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
+    st.header("📊 STATUS")
+    st.info("Diagnostic Node Active")
+    st.markdown("**Last Sync Time:**")
+    st.write(datetime.datetime.now().strftime('%H:%M:%S'))
     st.markdown("---")
-    st.markdown("### 🛠️ System Control")
-    if st.button("🗑️ PURGE SESSION DATA", use_container_width=True):
+    st.header("🛠️ System Control")
+    if st.button("🗑️ PURGE SESSION DATA"):
         st.session_state.chat_history = []
         for key, val in vitals_defaults.items():
             st.session_state[key] = val
         st.rerun()
-
-    st.info("""
-    **Node Info:**
-    - Model: Groq-Llama-3
-    - Protocol: HTTPS/FastAPI
-    - Encryption: AES-256
-    """)
-
-    st.markdown(f"""
-    <div style="font-size:10px; color:#4ade80; opacity:0.5; margin-top:50px;">
-        CLINIQ-OS v4.5.2 | STABLE_BUILD
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown("---")
+    st.header("Node Info")
+    st.markdown("- Model: Groq-Llama-3\n- Protocol: HTTPS/FastAPI\n- Encryption: AES-256")
+    st.markdown("---")
+    st.caption("CLINIQ-OS v4.5.2 | STABLE_BUILD")
+    
