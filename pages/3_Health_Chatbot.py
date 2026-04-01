@@ -45,11 +45,7 @@ st.markdown("""
     background: rgba(74,222,128,0.1); border: 1px solid rgba(74,222,128,0.2); 
     border-radius: 20px; padding: 5px 12px; font-size: 11px; color: #4ade80; font-weight: 600; 
 }
-.ai-dot { 
-    width: 6px; height: 6px; border-radius: 50%; 
-    background: #4ade80; display: inline-block; 
-    animation: blink 2s infinite; 
-}
+.ai-dot { width: 6px; height: 6px; border-radius: 50%; background: #4ade80; display: inline-block; animation: blink 2s infinite; }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
 /* Section Headers */
@@ -66,52 +62,21 @@ st.markdown("""
     background: #0d120d; border: 1px solid #1a2e1a; border-radius: 14px; 
     padding: 1.2rem; text-align: center; border-top: 2px solid #4ade80;
 }
-.vital-label {
-    font-size: 10px; color: rgba(255,255,255,0.4);
-    text-transform: uppercase; font-weight: 800; margin-bottom: 8px;
-}
-.vital-value {
-    font-family: 'JetBrains Mono';
-    font-size: 24px; color: #ffffff; font-weight: 700;
-}
-.vital-unit {
-    font-size: 14px; color: #ffffff;
-    font-weight: 500; margin-left: 4px;
-}
+.vital-label { font-size: 10px; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 800; margin-bottom: 8px; }
+.vital-value { font-family: 'JetBrains Mono'; font-size: 24px; color: #ffffff; font-weight: 700; }
+.vital-unit { font-size: 14px; color: #ffffff; font-weight: 500; margin-left: 4px; }
 
 /* Popover Buttons */
 div[data-testid="stPopover"] > button {
-    background: transparent !important;
-    border: 1px solid #1a2e1a !important;
-    color: #4ade80 !important;
-    font-size: 10px !important;
-    border-radius: 20px !important;
-    margin-top: 10px !important;
-    width: 100%;
+    background: transparent !important; border: 1px solid #1a2e1a !important;
+    color: #4ade80 !important; font-size: 10px !important; 
+    border-radius: 20px !important; margin-top: 10px !important; width: 100%;
 }
 
 /* Chat Bubbles */
-.bubble {
-    padding: 1.25rem;
-    border-radius: 14px;
-    margin-bottom: 1rem;
-    line-height: 1.7;
-    font-size: 14px;
-    max-width: 85%;
-}
-.bubble-ai {
-    background: #0d120d;
-    border: 1px solid #1a2e1a;
-    border-left: 4px solid #4ade80;
-    color: rgba(255,255,255,0.8);
-}
-.bubble-user {
-    background: #0f1a0f;
-    border: 1px solid #1a2e1a;
-    margin-left: auto;
-    border-right: 4px solid #58a6ff;
-    color: #ffffff;
-}
+.bubble { padding: 1.25rem; border-radius: 14px; margin-bottom: 1rem; line-height: 1.7; font-size: 14px; max-width: 85%; }
+.bubble-ai { background: #0d120d; border: 1px solid #1a2e1a; border-left: 4px solid #4ade80; color: rgba(255,255,255,0.8); }
+.bubble-user { background: #0f1a0f; border: 1px solid #1a2e1a; margin-left: auto; border-right: 4px solid #58a6ff; color: #ffffff; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -135,7 +100,7 @@ API_URL = st.secrets.get(
     "https://zay7ab-health-ai-api.hf.space"
 )
 
-# ✅ FIXED PDF FUNCTION
+# --- Fixed PDF Function ---
 def export_pdf(history, vitals):
     pdf = FPDF()
     pdf.add_page()
@@ -264,15 +229,44 @@ with tab_chat:
             )
             st.rerun()
 
+# ✅ FIXED REPORT TAB
 with tab_reports:
     st.markdown("### 📄 Diagnostic Report Hub")
-    st.file_uploader(
+
+    uploaded_report = st.file_uploader(
         "Upload Lab Reports (PDF, PNG, JPG)",
-        type=["pdf", "png", "jpg"]
+        type=["pdf", "png", "jpg", "jpeg"],
+        key="diagnostic_report"
     )
 
-    if st.button("Run AI Document Analysis"):
-        st.info("Scanning for diagnostic markers...")
+    if uploaded_report:
+        st.success(f"Uploaded: {uploaded_report.name}")
+
+    if uploaded_report and st.button("Run AI Document Analysis"):
+        with st.spinner("🔍 Analyzing diagnostic report..."):
+            try:
+                file_bytes = uploaded_report.getvalue()
+
+                response = requests.post(
+                    f"{API_URL}/analyze-report",
+                    files={
+                        "file": (
+                            uploaded_report.name,
+                            file_bytes,
+                            uploaded_report.type
+                        )
+                    },
+                    timeout=60
+                )
+
+                response.raise_for_status()
+                result = response.json()
+
+                st.markdown("### 🧠 AI Diagnostic Insights")
+                st.markdown(result.get("analysis", "No findings detected."))
+
+            except Exception as e:
+                st.error(f"Report analysis failed: {e}")
 
 with tab_tools:
     st.markdown("### 🛠️ Professional Utilities")
