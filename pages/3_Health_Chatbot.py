@@ -1,12 +1,15 @@
-Here is the updated Streamlit code with the **Quick Questions** sidebar section and the **Symptom Selector** grid removed, while keeping all other logic, styles, and formatting exactly as you provided.
-
-```python
 import streamlit as st
 import requests
 import datetime
 import sys
+
+# Ensure local utils can be found
 sys.path.append('.')
-from utils.sidebar import load_sidebar
+try:
+    from utils.sidebar import load_sidebar
+except ImportError:
+    def load_sidebar():
+        st.sidebar.info("Sidebar utility not found.")
 
 st.set_page_config(page_title="AI Health Chatbot", page_icon="🤖", layout="wide")
 load_sidebar()
@@ -40,9 +43,6 @@ st.markdown("""
 .chat-box-header { background: #f8faf8; border: 1px solid #e0ece0; border-bottom: none; border-radius: 16px 16px 0 0; padding: 0.75rem 1.25rem; display: flex; align-items: center; justify-content: space-between; }
 .chat-box-title { font-size: 13px; font-weight: 600; color: #1a3a1a; }
 .chat-box-badge { font-size: 10px; color: #639922; background: #eaf3de; padding: 2px 8px; border-radius: 20px; }
-.symptom-card-wrap { background: white; border: 1.5px solid #e0ece0; border-radius: 12px; padding: 0.75rem 0.5rem; text-align: center; }
-.symptom-icon { font-size: 1.5rem; }
-.symptom-name { font-size: 11px; font-weight: 600; color: #1a3a1a; margin-top: 4px; }
 .section-label { font-size: 11px; font-weight: 600; color: #7a8f7a; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; margin-top: 1rem; }
 .cap-item { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid #f5f7f5; font-size: 12px; color: #3a4a3a; }
 .cap-item:last-child { border-bottom: none; }
@@ -76,7 +76,7 @@ def get_ai_response(user_input, history, language="English"):
         if "error" in result:
             return "Sorry, I encountered an error. Please try again."
         return result["reply"]
-    except:
+    except Exception:
         return "Connection error. Please try again."
 
 # Topbar
@@ -95,13 +95,15 @@ col_main, col_side = st.columns([3, 1])
 
 with col_side:
     st.markdown('<div class="section-label">✨ Capabilities</div>', unsafe_allow_html=True)
-    for cap in ["Symptom analysis", "Drug information", "Mental health", "Nutrition advice", "Emergency guidance", "Lab results", "50+ languages"]:
+    capabilities = ["Symptom analysis", "Drug information", "Mental health", 
+                    "Nutrition advice", "Emergency guidance", "Lab results", "50+ languages"]
+    for cap in capabilities:
         st.markdown(f'<div class="cap-item"><div class="cap-dot"></div>{cap}</div>', unsafe_allow_html=True)
 
     st.markdown('<div class="section-label">🏷️ Topics</div>', unsafe_allow_html=True)
-    topics_html = ""
-    for t in ["Heart Health", "Diabetes", "Blood Pressure", "Mental Health", "Nutrition", "Sleep", "Pregnancy", "Allergies"]:
-        topics_html += f'<span style="display:inline-block;background:#f0f4f0;border:1px solid #d4edbe;color:#3b6d11;border-radius:20px;padding:3px 9px;font-size:11px;margin:2px;">{t}</span>'
+    topics = ["Heart Health", "Diabetes", "Blood Pressure", "Mental Health", 
+              "Nutrition", "Sleep", "Pregnancy", "Allergies"]
+    topics_html = "".join([f'<span style="display:inline-block;background:#f0f4f0;border:1px solid #d4edbe;color:#3b6d11;border-radius:20px;padding:3px 9px;font-size:11px;margin:2px;">{t}</span>' for t in topics])
     st.markdown(f'<div style="line-height:2.2;">{topics_html}</div>', unsafe_allow_html=True)
 
     st.markdown('<div class="section-label">🌐 Language</div>', unsafe_allow_html=True)
@@ -119,88 +121,8 @@ with col_main:
 
     with chat_area:
         st.markdown('<div class="date-badge"><span>Today</span></div>', unsafe_allow_html=True)
-
         st.markdown(f"""
         <div class="msg-ai">
             <div class="msg-ai-ava">🤖</div>
             <div class="msg-ai-bubble">
-                <div class="msg-ai-text">Hi! I am <b>HealthAI Assistant</b>. I am here to help with health questions, symptom analysis, medication information and wellness advice.<br/><br/>How can I help you today?</div>
-                <div class="msg-time">{now}</div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        for message in st.session_state.chat_history:
-            if message["role"] == "user":
-                st.markdown(f"""
-                <div class="msg-user">
-                    <div class="msg-user-bubble">
-                        <div class="msg-user-text">{message["content"]}</div>
-                        <div class="msg-time-user">{now}</div>
-                    </div>
-                    <div class="msg-user-ava">👤</div>
-                </div>
-                """, unsafe_allow_html=True)
-            else:
-                st.markdown(f"""
-                <div class="msg-ai">
-                    <div class="msg-ai-ava">🤖</div>
-                    <div class="msg-ai-bubble">
-                        <div class="msg-ai-text">{message["content"]}</div>
-                        <div class="msg-time">{now}</div>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-
-        # Auto scroll anchor
-        st.markdown('<div id="chat-end"></div>', unsafe_allow_html=True)
-
-    # Auto scroll JavaScript
-    st.markdown("""
-    <script>
-        function autoScroll() {
-            var iframes = window.parent.document.querySelectorAll('iframe');
-            iframes.forEach(function(iframe) {
-                try {
-                    var scrollable = iframe.contentDocument.querySelectorAll('[data-testid="stVerticalBlockBorderWrapper"]');
-                    scrollable.forEach(function(el) {
-                        el.scrollTop = el.scrollHeight;
-                    });
-                } catch(e) {}
-            });
-            var blocks = window.parent.document.querySelectorAll('[data-testid="stVerticalBlockBorderWrapper"]');
-            blocks.forEach(function(el) {
-                el.scrollTop = el.scrollHeight;
-            });
-        }
-        setTimeout(autoScroll, 200);
-        setTimeout(autoScroll, 600);
-        setTimeout(autoScroll, 1200);
-    </script>
-    """, unsafe_allow_html=True)
-
-    # Chat input
-    user_input = st.chat_input("Type your health question here...")
-    if user_input:
-        st.session_state.chat_history.append({"role": "user", "content": user_input})
-        with st.spinner("HealthAI is thinking..."):
-            reply = get_ai_response(user_input, st.session_state.chat_history[:-1], language)
-            st.session_state.chat_history.append({"role": "assistant", "content": reply})
-            st.rerun()
-
-    if st.session_state.chat_history:
-        b1, b2, b3 = st.columns(3)
-        with b1:
-            if st.button("🗑️ Clear Chat"):
-                st.session_state.chat_history = []
-                st.rerun()
-        with b2:
-            chat_text = "\n\n".join([f"{'You' if m['role']=='user' else 'HealthAI'}: {m['content']}" for m in st.session_state.chat_history])
-            st.download_button("💾 Save Chat", data=chat_text, file_name="health_chat.txt", mime="text/plain")
-        with b3:
-            if st.button("🔄 New Session"):
-                st.session_state.chat_history = []
-                st.rerun()
-
-st.markdown('<div class="disclaimer">⚠️ HealthAI provides general health information only. Always consult a qualified doctor. In emergencies call 999/911/112 immediately.</div>', unsafe_allow_html=True)
-```
+                <div class="msg-ai-text">Hi! I am <b>HealthAI Assistant
