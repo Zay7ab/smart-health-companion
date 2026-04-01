@@ -4,6 +4,7 @@ import datetime
 import os
 import sys
 from fpdf import FPDF
+from utils.sidebar import load_sidebar # Ensure this file exists
 
 # --- Import Mic Recorder (Optional Feature) ---
 try:
