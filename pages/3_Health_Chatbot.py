@@ -227,14 +227,48 @@ with tab_tools:
 
 # Sidebar
 with st.sidebar:
-    st.markdown("### 📊 Session Status")
-    st.write(f"Vitals Updated: {datetime.datetime.now().strftime('%H:%M')}")
-    if st.button("🗑️ Reset All Sessions"):
+    st.markdown(f"""
+    <div style="text-align: center; padding: 1.5rem 0; background: #0d120d; border: 1px solid #1a2e1a; border-radius: 12px; margin-bottom: 20px;">
+        <h2 style="color: #4ade80; margin-bottom: 0;">📊 STATUS</h2>
+        <p style="color: rgba(255,255,255,0.4); font-size: 12px;">Diagnostic Node Active</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Session Info Card
+    st.markdown(f"""
+    <div style="background: #0f1a0f; padding: 15px; border-radius: 10px; border-left: 3px solid #4ade80;">
+        <div style="color: rgba(255,255,255,0.5); font-size: 10px; text-transform: uppercase;">Last Sync Time</div>
+        <div style="color: white; font-size: 18px; font-weight: 700; font-family: 'JetBrains Mono';">
+            {datetime.datetime.now().strftime('%H:%M:%S')}
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("---")
+    
+    # System Metrics
+    st.markdown("### 🛠️ System Control")
+    
+    # Custom Styled Reset Button
+    if st.button("🗑️ PURGE SESSION DATA", use_container_width=True):
         st.session_state.chat_history = []
+        # Reset vitals to defaults
+        for key, val in vitals_defaults.items():
+            st.session_state[key] = val
         st.rerun()
 
-st.markdown("""
-<div class="disclaimer">
-    ⚠️ <b>Clinical Disclaimer:</b> ClinIQ is an AI tool for informational purposes. In emergency cases, contact your local medical services immediately.
-</div>
-""", unsafe_allow_html=True)
+    st.markdown("---")
+    
+    # Quick Info
+    st.info("""
+    **Node Info:**
+    - Model: Groq-Llama-3
+    - Protocol: HTTPS/FastAPI
+    - Encryption: AES-256
+    """)
+
+    st.markdown(f"""
+    <div style="position: fixed; bottom: 20px; font-size: 10px; color: #4ade80; opacity: 0.5;">
+        CLINIQ-OS v4.5.2 | STABLE_BUILD
+    </div>
+    """, unsafe_allow_html=True)
