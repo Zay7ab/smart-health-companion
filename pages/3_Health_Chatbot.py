@@ -87,13 +87,14 @@ def export_pdf(history, vitals):
     pdf.set_font("Helvetica", '', 10)
     for msg in history:
         role = "PATIENT" if msg["role"] == "user" else "AI ASSISTANT"
-        # Using output 'S' requires encoding; modern fpdf2 output() returns bytes
-        txt = f"{role}: {msg['content']}".encode('latin-1', 'ignore').decode('latin-1')
+        # Cleaning and encoding for safety
+        content = str(msg['content']).encode('latin-1', 'ignore').decode('latin-1')
+        txt = f"{role}: {content}"
         pdf.multi_cell(0, 8, txt)
         pdf.ln(2)
     
-    # This ensures we get actual bytes back
-    return pdf.output()
+    # FIXED: Use 'S' to output as string, then encode to bytes
+    return pdf.output(dest='S').encode('latin-1')
 
 # --- UI Header ---
 st.markdown(f"""
@@ -124,9 +125,9 @@ for i, meta in enumerate(v_meta):
         </div>""", unsafe_allow_html=True)
         with st.popover(f"Edit {meta['key'].upper()}"):
             if meta['key'] == 'bp':
-                st.session_state[meta['key']] = st.text_input(f"New {meta['label']}", value=st.session_state[meta['key']])
+                st.session_state[meta['key']] = st.text_input(f"New {meta['label']}", value=st.session_state[meta['key']], key=f"input_{meta['key']}")
             else:
-                st.session_state[meta['key']] = st.number_input(f"New {meta['label']}", value=float(st.session_state[meta['key']]))
+                st.session_state[meta['key']] = st.number_input(f"New {meta['label']}", value=float(st.session_state[meta['key']]), key=f"input_{meta['key']}")
             if st.button(f"Update {meta['key']}", key=f"btn_{meta['key']}"): st.rerun()
 
 # --- Intelligence Tabs ---
@@ -171,18 +172,23 @@ with tab_tools:
     with c1:
         st.link_button("📍 Find Nearest Hospital", "https://www.google.com/maps/search/hospital")
     with c2:
-        # Generate the PDF and store in a variable
-        pdf_bytes = export_pdf(st.session_state.chat_history, st.session_state)
-        
-        # Streamlit requires bytes for the 'data' parameter
-        st.download_button(
-            label="💾 Download PDF Summary",
-            data=pdf_bytes,
-            file_name="ClinIQ_Report.pdf",
-            mime="application/pdf"
-        )
+        # Check if history exists to avoid empty PDFs
+        if st.session_state.chat_history:
+            try:
+                pdf_bytes = export_pdf(st.session_state.chat_history, st.session_state)
+                st.download_button(
+                    label="💾 Download PDF Summary",
+                    data=pdf_bytes,
+                    file_name="ClinIQ_Report.pdf",
+                    mime="application/pdf",
+                    key="download_pdf_btn"
+                )
+            except Exception as e:
+                st.error(f"Error generating PDF: {e}")
+        else:
+            st.info("Start a chat to generate a report summary.")
 
-# Sidebar and Footer
+# Sidebar
 with st.sidebar:
     st.markdown("### 📊 Session Status")
     st.write(f"Vitals Updated: {datetime.datetime.now().strftime('%H:%M')}")
