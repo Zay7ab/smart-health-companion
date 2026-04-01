@@ -80,13 +80,13 @@ st.markdown("""
     font-weight: 500; margin-left: 4px;
 }
 
-/* Popover Buttons */
+/* Popover Buttons Override */
 div[data-testid="stPopover"] > button {
-    background: transparent !important;
-    border: 1px solid #1a2e1a !important;
+    background: #1a2e1a !important;
+    border: 1px solid #4ade80 !important;
     color: #4ade80 !important;
     font-size: 10px !important;
-    border-radius: 20px !important;
+    border-radius: 10px !important;
     margin-top: 10px !important;
     width: 100%;
 }
@@ -136,7 +136,7 @@ API_URL = st.secrets.get(
     "https://zay7ab-health-ai-api.hf.space"
 )
 
-# ✅ FIXED PDF FUNCTION
+# --- PDF Export Function ---
 def export_pdf(history, vitals):
     pdf = FPDF()
     pdf.add_page()
@@ -159,7 +159,6 @@ def export_pdf(history, vitals):
 
     for msg in history:
         role = "PATIENT" if msg["role"] == "user" else "AI ASSISTANT"
-        # Sanitize to prevent FPDF Latin-1 encoding errors
         clean_txt = msg["content"].encode("ascii", "ignore").decode("ascii")
         pdf.multi_cell(0, 8, f"{role}: {clean_txt}")
         pdf.ln(2)
@@ -181,7 +180,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# --- Vitals ---
+# --- Vitals Observation Deck (EDITABLE) ---
 st.markdown(
     '<div class="section-header">📡 Vitals Observation Deck <div class="section-line"></div></div>',
     unsafe_allow_html=True
@@ -189,14 +188,15 @@ st.markdown(
 
 v_cols = st.columns(4)
 v_meta = [
-    {"label": "Blood Pressure", "key": "bp", "unit": ""},
-    {"label": "Heart Rate", "key": "hr", "unit": "BPM"},
-    {"label": "Body Temp", "key": "temp", "unit": "°F"},
-    {"label": "Oxygen Sat.", "key": "ox", "unit": "%"},
+    {"label": "Blood Pressure", "key": "bp", "unit": "", "type": "text"},
+    {"label": "Heart Rate", "key": "hr", "unit": "BPM", "type": "number"},
+    {"label": "Body Temp", "key": "temp", "unit": "°F", "type": "number"},
+    {"label": "Oxygen Sat.", "key": "ox", "unit": "%", "type": "number"},
 ]
 
 for i, meta in enumerate(v_meta):
     with v_cols[i]:
+        # Card Display
         st.markdown(f"""
         <div class="vital-card-container">
             <div class="vital-label">{meta['label']}</div>
@@ -205,6 +205,35 @@ for i, meta in enumerate(v_meta):
             </div>
         </div>
         """, unsafe_allow_html=True)
+        
+        # Edit Functionality
+        with st.popover(f"Edit {meta['label']}"):
+            if meta['type'] == "number":
+                # Ensure value is float for number_input
+                current_val = float(st.session_state[meta['key']])
+                new_val = st.number_input(f"New {meta['label']}", value=current_val, key=f"input_{meta['key']}")
+            else:
+                new_val = st.text_input(f"New {meta['label']}", value=st.session_state[meta['key']], key=f"input_{meta['key']}")
+            
+            if st.button("Update", key=f"btn_{meta['key']}"):
+                st.session_state[meta['key']] = new_val
+                st.rerun()
+
+# --- AI Suggestion Engine ---
+# Automated alerts based on vitals logic
+with st.container():
+    hr = float(st.session_state.hr)
+    ox = float(st.session_state.ox)
+    
+    suggestions = []
+    if hr > 100: suggestions.append("⚠️ **AI Insight:** Heart rate is high (Tachycardia). Consider rest or stress assessment.")
+    if hr < 50: suggestions.append("⚠️ **AI Insight:** Heart rate is below normal rest levels.")
+    if ox < 95: suggestions.append("🚨 **Critical Insight:** Oxygen saturation is low. Ensure proper breathing and ventilation.")
+    
+    if suggestions:
+        st.markdown('<div style="margin-top:15px;"></div>', unsafe_allow_html=True)
+        for s in suggestions:
+            st.info(s)
 
 # --- Tabs ---
 st.markdown('<div style="margin-top:2rem;"></div>', unsafe_allow_html=True)
@@ -276,7 +305,6 @@ with tab_reports:
     if uploaded_file is not None:
         if st.button("Run AI Document Analysis"):
             with st.spinner("Scanning for diagnostic markers..."):
-                # Simulation layer to prevent 404 crash
                 time.sleep(2) 
                 
                 simulated_analysis = (
@@ -288,7 +316,6 @@ with tab_reports:
                 st.success("✅ Analysis Finished")
                 st.info(simulated_analysis)
                 
-                # Add to chat history
                 st.session_state.chat_history.append({
                     "role": "assistant", 
                     "content": f"📋 **Report Analysis:** {simulated_analysis}"
@@ -301,7 +328,7 @@ with tab_tools:
     with c1:
         st.link_button(
             "📍 Find Nearest Hospital",
-            "https://www.google.com/maps/search/hospital+near+me"
+            "https://www.google.com/maps/search/hospitals+near+me"
         )
 
     with c2:
