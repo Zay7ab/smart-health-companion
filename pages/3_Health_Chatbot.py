@@ -2,7 +2,6 @@ import streamlit as st
 import requests
 import datetime
 import os
-import sys
 from fpdf import FPDF
 
 # --- Import Mic Recorder (Optional Feature) ---
@@ -25,7 +24,7 @@ st.markdown("""
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono&display=swap');
 
 * { font-family: 'Inter', sans-serif; }
-.stApp { background: #0a0f0a !important; }
+.stApp { background: #0a0f0a !important; color: #e0e0e0; }
 
 /* Topbar */
 .topbar { 
@@ -57,25 +56,25 @@ st.markdown("""
 .vital-card-container {
     background: #0d120d; border: 1px solid #1a2e1a; border-radius: 14px; 
     padding: 1.2rem; text-align: center; border-top: 2px solid #4ade80;
+    transition: transform 0.3s ease;
 }
+.vital-card-container:hover { transform: translateY(-5px); border-color: #58a6ff; }
 .vital-label { font-size: 10px; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 800; margin-bottom: 8px; }
 .vital-value { font-family: 'JetBrains Mono'; font-size: 24px; color: #ffffff; font-weight: 700; }
 .vital-unit { font-size: 14px; color: #ffffff; font-weight: 500; margin-left: 4px; }
 
-/* Popover Buttons */
-div[data-testid="stPopover"] > button {
-    background: transparent !important; border: 1px solid #1a2e1a !important;
-    color: #4ade80 !important; font-size: 10px !important; 
-    border-radius: 20px !important; margin-top: 10px !important; width: 100%;
-}
-
 /* Chat Bubbles */
-.bubble { padding: 1.25rem; border-radius: 14px; margin-bottom: 1rem; line-height: 1.7; font-size: 14px; max-width: 85%; }
-.bubble-ai { background: #0d120d; border: 1px solid #1a2e1a; border-left: 4px solid #4ade80; color: rgba(255,255,255,0.8); }
+.bubble { padding: 1.25rem; border-radius: 14px; margin-bottom: 1rem; line-height: 1.6; font-size: 14px; max-width: 85%; }
+.bubble-ai { background: #0d120d; border: 1px solid #1a2e1a; border-left: 4px solid #4ade80; color: #d1d5db; }
 .bubble-user { background: #0f1a0f; border: 1px solid #1a2e1a; margin-left: auto; border-right: 4px solid #58a6ff; color: #ffffff; }
 
-/* Disclaimer */
-.disclaimer { background: rgba(255,200,0,0.05); border: 1px solid rgba(255,200,0,0.15); border-radius: 10px; padding: 0.75rem; font-size: 11px; color: rgba(255,200,0,0.7); margin-top: 2rem; text-align: center; }
+/* Tabs Styling */
+.stTabs [data-baseweb="tab-list"] { gap: 10px; }
+.stTabs [data-baseweb="tab"] { 
+    background-color: #0d120d; border-radius: 8px 8px 0 0; 
+    padding: 10px 20px; color: #888; 
+}
+.stTabs [aria-selected="true"] { color: #4ade80 !important; border-bottom: 2px solid #4ade80 !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -90,7 +89,7 @@ for key, val in vitals_defaults.items():
 
 API_URL = st.secrets.get("API_BASE_URL", "https://zay7ab-health-ai-api.hf.space")
 
-# --- Helper: PDF Generator (Fixed for Streamlit) ---
+# --- Helper: PDF Generator ---
 def export_pdf(history, vitals):
     pdf = FPDF()
     pdf.add_page()
@@ -100,7 +99,8 @@ def export_pdf(history, vitals):
     
     # Vitals Section
     pdf.set_font("Arial", 'B', 12)
-    pdf.cell(0, 10, "Patient Vitals Observation:", ln=True)
+    pdf.set_fill_color(240, 240, 240)
+    pdf.cell(0, 10, "Patient Vitals Observation:", ln=True, fill=True)
     pdf.set_font("Arial", '', 10)
     pdf.cell(0, 8, f"Blood Pressure: {vitals['bp']}", ln=True)
     pdf.cell(0, 8, f"Heart Rate: {vitals['hr']} BPM", ln=True)
@@ -110,22 +110,22 @@ def export_pdf(history, vitals):
     
     # Conversation Section
     pdf.set_font("Arial", 'B', 12)
-    pdf.cell(0, 10, "Clinical Interaction Log:", ln=True)
+    pdf.cell(0, 10, "Clinical Interaction Log:", ln=True, fill=True)
     pdf.set_font("Arial", '', 10)
     
     for msg in history:
         role = "PATIENT" if msg["role"] == "user" else "AI ASSISTANT"
-        # FPDF standard fonts don't support UTF-8 (emojis/special chars). 
-        # We strip non-Latin-1 characters to prevent crashes.
+        # Remove characters that Arial can't handle
         clean_txt = msg['content'].encode('latin-1', 'ignore').decode('latin-1')
-        txt = f"{role}: {clean_txt}"
-        pdf.multi_cell(0, 8, txt)
+        pdf.set_font("Arial", 'B', 9)
+        pdf.cell(0, 6, f"{role}:", ln=True)
+        pdf.set_font("Arial", '', 10)
+        pdf.multi_cell(0, 6, clean_txt)
         pdf.ln(2)
     
-    # IMPORTANT: Convert bytearray to bytes for Streamlit download
     return bytes(pdf.output())
 
-# --- UI Header ---
+# --- Main UI Header ---
 st.markdown(f"""
 <div class="topbar">
     <div>
@@ -136,7 +136,7 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# --- Vitals Observation Deck ---
+# --- Vitals Section ---
 st.markdown('<div class="section-header">📡 Vitals Observation Deck <div class="section-line"></div></div>', unsafe_allow_html=True)
 v_cols = st.columns(4)
 v_meta = [
@@ -152,123 +152,87 @@ for i, meta in enumerate(v_meta):
             <div class="vital-label">{meta['label']}</div>
             <div class="vital-value">{st.session_state[meta['key']]} <span class="vital-unit">{meta['unit']}</span></div>
         </div>""", unsafe_allow_html=True)
-        with st.popover(f"Edit {meta['key'].upper()}"):
+        with st.popover(f"Edit {meta['key'].upper()}", use_container_width=True):
             if meta['key'] == 'bp':
-                st.session_state[meta['key']] = st.text_input(f"New {meta['label']}", value=str(st.session_state[meta['key']]))
+                new_val = st.text_input(f"New {meta['label']}", value=str(st.session_state[meta['key']]), key=f"in_{meta['key']}")
             else:
-                st.session_state[meta['key']] = st.number_input(f"New {meta['label']}", value=float(st.session_state[meta['key']]))
-            if st.button(f"Update {meta['key']}", key=f"upd_{meta['key']}"): 
+                new_val = st.number_input(f"New {meta['label']}", value=float(st.session_state[meta['key']]), key=f"in_{meta['key']}")
+            
+            if st.button(f"Update", key=f"btn_{meta['key']}", use_container_width=True):
+                st.session_state[meta['key']] = new_val
                 st.rerun()
 
-# --- Intelligence Tabs ---
-st.markdown('<div style="margin-top:2rem;"></div>', unsafe_allow_html=True)
+# --- Content Tabs ---
 st.markdown('<div class="section-header">🧠 Intelligence & Diagnostics <div class="section-line"></div></div>', unsafe_allow_html=True)
-
 tab_chat, tab_reports, tab_tools = st.tabs(["💬 Clinical Chat", "📄 Diagnostic Reports", "🛠️ Clinical Tools"])
 
 with tab_chat:
-    chat_box = st.container()
-    with chat_box:
-        st.markdown('<div class="bubble bubble-ai"><b>ClinIQ Assistant:</b> Environment ready. Vitals synced. How can I assist you?</div>', unsafe_allow_html=True)
+    chat_container = st.container(height=400, border=False)
+    with chat_container:
+        st.markdown('<div class="bubble bubble-ai"><b>ClinIQ Assistant:</b> Environment ready. Vitals synced. How can I assist you today?</div>', unsafe_allow_html=True)
         for m in st.session_state.chat_history:
             cls = "bubble-user" if m["role"] == "user" else "bubble-ai"
             st.markdown(f'<div class="bubble {cls}">{m["content"]}</div>', unsafe_allow_html=True)
 
-    if mic_recorder:
-        st.write("🎤 Voice Triage (Beta):")
-        mic_recorder(start_prompt="Record Symptoms", stop_prompt="Stop Recording", key='recorder')
-
-    query = st.chat_input("Describe symptoms or ask about medications...")
+    # Voice & Text Input
+    col_input, col_voice = st.columns([0.85, 0.15])
+    with col_voice:
+        if mic_recorder:
+            mic_recorder(start_prompt="🎤", stop_prompt="🛑", key='recorder')
+    
+    query = st.chat_input("Describe symptoms (e.g., 'Persistent headache since morning')...")
+    
     if query:
         st.session_state.chat_history.append({"role": "user", "content": query})
         with st.spinner("🤖 Analyzing clinical context..."):
-            context = f"[Context: BP {st.session_state.bp}, HR {st.session_state.hr}] "
+            context = f"[Context: BP {st.session_state.bp}, HR {st.session_state.hr}, Temp {st.session_state.temp}] "
             try:
                 res = requests.post(
                     f"{API_URL}/chat", 
                     json={
                         "message": context + query, 
                         "history": st.session_state.chat_history[:-1],
-                        "api_key": st.secrets.get("GROQ_API_KEY", "")
+                        "api_key": st.secrets.get("GROQ_API_KEY", "demo_key")
                     }, 
                     timeout=20
                 )
-                res.raise_for_status()
-                reply = res.json().get("reply", "Clinical Intelligence calibrating...")
-            except Exception as e:
-                reply = "⏱️ API Connection Issue. Check your internet or API status."
+                reply = res.json().get("reply", "Consulting medical database...")
+            except:
+                reply = "⚠️ Connection error. Please ensure the API endpoint is active."
                 
             st.session_state.chat_history.append({"role": "assistant", "content": reply})
             st.rerun()
 
 with tab_reports:
-    st.markdown("### 📄 Diagnostic Report Hub")
-    st.file_uploader("Upload Lab Reports (PDF, PNG, JPG)", type=["pdf", "png", "jpg"])
-    if st.button("Run AI Document Analysis"):
-        st.info("Scanning for diagnostic markers...")
+    st.markdown("### 📄 Lab Report Analysis")
+    uploaded_file = st.file_uploader("Upload Medical Reports", type=["pdf", "png", "jpg"])
+    if uploaded_file and st.button("Process Document"):
+        st.info("Extracting data from document...")
 
 with tab_tools:
-    st.markdown("### 🛠️ Professional Utilities")
+    st.markdown("### 🛠️ Utilities")
     c1, c2 = st.columns(2)
     with c1:
-        st.link_button("📍 Find Nearest Hospital", "https://www.google.com/maps/search/hospital+near+me")
+        st.link_button("📍 Locate Nearest ER", "https://www.google.com/maps/search/hospitals+near+me")
     with c2:
-        if st.button("📝 Generate Clinical Report"):
-            try:
-                pdf_bytes = export_pdf(st.session_state.chat_history, st.session_state)
-                st.download_button(
-                    label="💾 Download PDF Summary",
-                    data=pdf_bytes,
-                    file_name=f"ClinIQ_Summary_{datetime.date.today()}.pdf",
-                    mime="application/pdf"
-                )
-            except Exception as e:
-                st.error(f"Error generating PDF: {e}")
+        if st.button("📝 Generate PDF Report", use_container_width=True):
+            if not st.session_state.chat_history:
+                st.warning("No conversation data to export.")
+            else:
+                pdf_data = export_pdf(st.session_state.chat_history, st.session_state)
+                st.download_button("💾 Download Report", data=pdf_data, file_name="ClinIQ_Report.pdf", mime="application/pdf")
 
-# Sidebar
+# --- Sidebar ---
 with st.sidebar:
-    st.markdown(f"""
-    <div style="text-align: center; padding: 1.5rem 0; background: #0d120d; border: 1px solid #1a2e1a; border-radius: 12px; margin-bottom: 20px;">
-        <h2 style="color: #4ade80; margin-bottom: 0;">📊 STATUS</h2>
-        <p style="color: rgba(255,255,255,0.4); font-size: 12px;">Diagnostic Node Active</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Session Info Card
-    st.markdown(f"""
-    <div style="background: #0f1a0f; padding: 15px; border-radius: 10px; border-left: 3px solid #4ade80;">
-        <div style="color: rgba(255,255,255,0.5); font-size: 10px; text-transform: uppercase;">Last Sync Time</div>
-        <div style="color: white; font-size: 18px; font-weight: 700; font-family: 'JetBrains Mono';">
-            {datetime.datetime.now().strftime('%H:%M:%S')}
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    st.markdown("---")
+    st.markdown("### 📊 System Status")
+    st.success("Network: Connected")
+    st.write(f"**Sync Time:** {datetime.datetime.now().strftime('%H:%M:%S')}")
     
-    # System Metrics
-    st.markdown("### 🛠️ System Control")
-    
-    # Custom Styled Reset Button
-    if st.button("🗑️ PURGE SESSION DATA", use_container_width=True):
+    st.divider()
+    if st.button("🗑️ CLEAR SESSION", use_container_width=True, type="primary"):
         st.session_state.chat_history = []
-        # Reset vitals to defaults
         for key, val in vitals_defaults.items():
             st.session_state[key] = val
         st.rerun()
-
-    st.markdown("---")
     
-    # Quick Info
-    st.info("""
-    **Node Info:**
-    - Model: Groq-Llama-3
-    - Protocol: HTTPS/FastAPI
-    - Encryption: AES-256
-    """)
-
-    st.markdown(f"""
-    <div style="position: fixed; bottom: 20px; font-size: 10px; color: #4ade80; opacity: 0.5;">
-        CLINIQ-OS v4.5.2 | STABLE_BUILD
-    </div>
-    """, unsafe_allow_html=True)
+    st.info("**Model:** Llama-3-Groq\n\n**Note:** This is an AI assistant, not a doctor. In emergency, call 911.")
