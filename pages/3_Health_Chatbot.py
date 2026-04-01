@@ -228,6 +228,3 @@ st.markdown("""
     ⚠️ <b>Clinical Disclaimer:</b> ClinIQ is an AI tool for informational purposes. In emergency cases, contact your local medical services immediately.
 </div>
 """, unsafe_allow_html=True)
-
-
-this is the actaul code and now fix this 
