@@ -1,3 +1,6 @@
+Here is the updated Streamlit code with the **Quick Questions** sidebar section and the **Symptom Selector** grid removed, while keeping all other logic, styles, and formatting exactly as you provided.
+
+```python
 import streamlit as st
 import requests
 import datetime
@@ -91,25 +94,6 @@ st.markdown(f"""
 col_main, col_side = st.columns([3, 1])
 
 with col_side:
-    st.markdown('<div class="section-label">💬 Quick Questions</div>', unsafe_allow_html=True)
-    quick_questions = [
-        ("🫀", "Signs of heart attack?"),
-        ("🩸", "Blood sugar control"),
-        ("🧠", "Anxiety relief tips"),
-        ("💊", "Drug interactions"),
-        ("🤒", "Fever and body aches"),
-        ("😴", "Better sleep tips"),
-        ("🏃", "Exercise for beginners"),
-        ("🥗", "Anti-inflammatory foods"),
-    ]
-    for icon, question in quick_questions:
-        if st.button(f"{icon}  {question}", key=f"qq_{question}"):
-            st.session_state.chat_history.append({"role": "user", "content": question})
-            with st.spinner(""):
-                reply = get_ai_response(question, st.session_state.chat_history[:-1])
-                st.session_state.chat_history.append({"role": "assistant", "content": reply})
-                st.rerun()
-
     st.markdown('<div class="section-label">✨ Capabilities</div>', unsafe_allow_html=True)
     for cap in ["Symptom analysis", "Drug information", "Mental health", "Nutrition advice", "Emergency guidance", "Lab results", "50+ languages"]:
         st.markdown(f'<div class="cap-item"><div class="cap-dot"></div>{cap}</div>', unsafe_allow_html=True)
@@ -195,40 +179,6 @@ with col_main:
     </script>
     """, unsafe_allow_html=True)
 
-    # Symptom selector
-    st.markdown('<div class="section-label">🩺 Select Symptoms</div>', unsafe_allow_html=True)
-    symptoms_list = [
-        ("🌡️", "Fever"), ("🤒", "Headache"), ("💔", "Chest Pain"),
-        ("😮‍💨", "Breathless"), ("🤢", "Nausea"), ("😴", "Fatigue"),
-        ("🩸", "Bleeding"), ("🦴", "Joint Pain"), ("👁️", "Blurred Vision"),
-    ]
-    selected_symptoms = []
-    sym_cols = st.columns(9)
-    for i, (icon, symptom) in enumerate(symptoms_list):
-        with sym_cols[i]:
-            st.markdown(f"""
-            <div class="symptom-card-wrap">
-                <div class="symptom-icon">{icon}</div>
-                <div class="symptom-name">{symptom}</div>
-            </div>
-            """, unsafe_allow_html=True)
-            if st.checkbox("", key=f"sym_{symptom}", label_visibility="collapsed"):
-                selected_symptoms.append(symptom)
-
-    if selected_symptoms:
-        st.markdown(f"""
-        <div style="background:#eaf3de;border:1px solid #97c459;border-radius:10px;padding:0.6rem 1rem;margin-top:0.5rem;font-size:12px;color:#27500a;">
-            <b>Selected:</b> {', '.join(selected_symptoms)}
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("🔍 Analyze These Symptoms"):
-            msg = f"I have these symptoms: {', '.join(selected_symptoms)}. What could be wrong?"
-            st.session_state.chat_history.append({"role": "user", "content": msg})
-            with st.spinner("HealthAI is analyzing..."):
-                reply = get_ai_response(msg, st.session_state.chat_history[:-1])
-                st.session_state.chat_history.append({"role": "assistant", "content": reply})
-                st.rerun()
-
     # Chat input
     user_input = st.chat_input("Type your health question here...")
     if user_input:
@@ -253,3 +203,4 @@ with col_main:
                 st.rerun()
 
 st.markdown('<div class="disclaimer">⚠️ HealthAI provides general health information only. Always consult a qualified doctor. In emergencies call 999/911/112 immediately.</div>', unsafe_allow_html=True)
+```
