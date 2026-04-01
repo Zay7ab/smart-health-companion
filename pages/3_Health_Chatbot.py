@@ -1,88 +1,255 @@
 import streamlit as st
 import requests
 import datetime
-import pdfplumber  # PDF reading ke liye
-from fpdf import FPDF
+import sys
+sys.path.append('.')
 from utils.sidebar import load_sidebar
 
-# --- Page Configuration ---
-st.set_page_config(
-    page_title="ClinIQ | Clinical Intelligence",
-    page_icon="🤖",
-    layout="wide"
-)
-
+st.set_page_config(page_title="AI Health Chatbot", page_icon="🤖", layout="wide")
 load_sidebar()
-
-# --- Full Dark Neon CSS (Keeping your original style) ---
-st.markdown("""
-<style>
-    /* ... (Aapka original CSS yahan rahega) ... */
-    .stApp { background: #0a0f0a !important; }
-    .bubble { padding: 1.25rem; border-radius: 14px; margin-bottom: 1rem; font-size: 14px; }
-    .bubble-ai { background: #0d120d; border-left: 4px solid #4ade80; color: rgba(255,255,255,0.8); }
-</style>
-""", unsafe_allow_html=True)
-
-# --- Session State ---
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []
-if "report_analysis" not in st.session_state:
-    st.session_state.report_analysis = ""
 
 API_URL = st.secrets.get("API_BASE_URL", "https://zay7ab-health-ai-api.hf.space")
 
-# --- Function: Extract Text from PDF ---
-def extract_text_from_pdf(file):
-    with pdfplumber.open(file) as pdf:
-        text = ""
-        for page in pdf.pages:
-            text += page.extract_text() + "\n"
-    return text
+st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+* { font-family: 'Inter', sans-serif; box-sizing: border-box; }
+.stApp { background: #f0f4f0 !important; }
+.chat-topbar { background: white; border-radius: 16px; padding: 1rem 1.5rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 12px; border: 1px solid #e0ece0; }
+.chat-topbar-avatar { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg,#2d5a1a,#639922); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; }
+.chat-topbar-name { font-size: 16px; font-weight: 700; color: #1a3a1a; }
+.chat-topbar-status { font-size: 11px; color: #639922; display: flex; align-items: center; gap: 4px; margin-top: 2px; }
+.online-dot { width: 6px; height: 6px; border-radius: 50%; background: #639922; display: inline-block; animation: blink 2s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.topbar-badge { background: #eaf3de; color: #27500a; font-size: 10px; font-weight: 600; padding: 4px 10px; border-radius: 20px; border: 1px solid #d4edbe; margin-left: auto; }
+.msg-ai { display: flex; align-items: flex-end; gap: 8px; margin-bottom: 14px; }
+.msg-ai-ava { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg,#2d5a1a,#639922); display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+.msg-ai-bubble { background: white; border: 1px solid #e8f0e8; border-radius: 4px 16px 16px 16px; padding: 10px 14px; max-width: 75%; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+.msg-ai-text { font-size: 13px; color: #1a3a1a; line-height: 1.7; }
+.msg-time { font-size: 10px; color: #aab8aa; margin-top: 4px; }
+.msg-user { display: flex; justify-content: flex-end; align-items: flex-end; gap: 8px; margin-bottom: 14px; }
+.msg-user-ava { width: 32px; height: 32px; border-radius: 50%; background: #d4edbe; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+.msg-user-bubble { background: linear-gradient(135deg,#2d5a1a,#4a8520); border-radius: 16px 4px 16px 16px; padding: 10px 14px; max-width: 75%; }
+.msg-user-text { font-size: 13px; color: white; line-height: 1.6; }
+.msg-time-user { font-size: 10px; color: rgba(255,255,255,0.55); margin-top: 4px; text-align: right; }
+.date-badge { text-align: center; margin-bottom: 12px; }
+.date-badge span { background: #f0f4f0; color: #7a8f7a; font-size: 11px; padding: 3px 12px; border-radius: 20px; }
+.chat-box-header { background: #f8faf8; border: 1px solid #e0ece0; border-bottom: none; border-radius: 16px 16px 0 0; padding: 0.75rem 1.25rem; display: flex; align-items: center; justify-content: space-between; }
+.chat-box-title { font-size: 13px; font-weight: 600; color: #1a3a1a; }
+.chat-box-badge { font-size: 10px; color: #639922; background: #eaf3de; padding: 2px 8px; border-radius: 20px; }
+.symptom-card-wrap { background: white; border: 1.5px solid #e0ece0; border-radius: 12px; padding: 0.75rem 0.5rem; text-align: center; }
+.symptom-icon { font-size: 1.5rem; }
+.symptom-name { font-size: 11px; font-weight: 600; color: #1a3a1a; margin-top: 4px; }
+.section-label { font-size: 11px; font-weight: 600; color: #7a8f7a; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; margin-top: 1rem; }
+.cap-item { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid #f5f7f5; font-size: 12px; color: #3a4a3a; }
+.cap-item:last-child { border-bottom: none; }
+.cap-dot { width: 6px; height: 6px; border-radius: 50%; background: #639922; flex-shrink: 0; }
+.disclaimer { background: #fff8e1; border: 1px solid #f0c040; border-radius: 10px; padding: 0.75rem 1rem; font-size: 11px; color: #7a6000; margin-top: 1rem; }
+div[data-testid="stButton"] button { background: white !important; color: #27500a !important; border: 1.5px solid #d4edbe !important; border-radius: 20px !important; font-weight: 500 !important; font-size: 12px !important; padding: 0.4rem 1rem !important; }
+div[data-testid="stButton"] button:hover { background: #eaf3de !important; border-color: #97c459 !important; }
+label { color: #1a3a1a !important; }
+p { color: #1a3a1a !important; }
+</style>
+""", unsafe_allow_html=True)
 
-# --- Tabs ---
-tab_chat, tab_reports, tab_tools = st.tabs(["💬 Clinical Chat", "📄 Diagnostic Reports", "🛠️ Clinical Tools"])
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
 
-with tab_reports:
-    st.markdown("### 📄 Diagnostic Report Hub")
-    
-    uploaded_file = st.file_uploader("Upload Lab Reports (PDF)", type=["pdf"])
+now = datetime.datetime.now().strftime("%I:%M %p")
 
-    if uploaded_file is not None:
-        st.success(f"File '{uploaded_file.name}' uploaded successfully!")
-        
-        if st.button("🔍 Run AI Document Analysis"):
-            with st.spinner("🤖 Clinical AI is reading your report..."):
-                # 1. PDF se text nikalo
-                report_text = extract_text_from_pdf(uploaded_file)
-                
-                if report_text.strip():
-                    # 2. AI ko context ke saath bhejo
-                    analysis_prompt = f"Analyze this medical report and summarize findings, abnormal values, and recommendations: \n\n {report_text}"
-                    
-                    try:
-                        res = requests.post(
-                            f"{API_URL}/chat",
-                            json={
-                                "message": analysis_prompt,
-                                "history": [],
-                                "api_key": st.secrets.get("GROQ_API_KEY", "fallback_key"),
-                            },
-                            timeout=30
-                        )
-                        result = res.json().get("reply", "Analysis failed.")
-                        st.session_state.report_analysis = result
-                    except Exception as e:
-                        st.error(f"Connection Error: {e}")
-                else:
-                    st.warning("PDF se text nahi mil saka. Shayad ye scanned image ho.")
+def get_ai_response(user_input, history, language="English"):
+    try:
+        response = requests.post(
+            f"{API_URL}/chat",
+            json={
+                "message": user_input,
+                "history": history,
+                "language": language,
+                "api_key": st.secrets.get("GROQ_API_KEY", "")
+            },
+            timeout=30
+        )
+        result = response.json()
+        if "error" in result:
+            return "Sorry, I encountered an error. Please try again."
+        return result["reply"]
+    except:
+        return "Connection error. Please try again."
 
-    # Display Analysis Result
-    if st.session_state.report_analysis:
-        st.markdown("---")
-        st.markdown("#### 🩺 AI Analysis Result:")
-        st.info(st.session_state.report_analysis)
+# Topbar
+st.markdown(f"""
+<div class="chat-topbar">
+    <div class="chat-topbar-avatar">🤖</div>
+    <div>
+        <div class="chat-topbar-name">HealthAI Assistant</div>
+        <div class="chat-topbar-status"><span class="online-dot"></span> Your Health Assistant · Online</div>
+    </div>
+    <div class="topbar-badge">FastAPI + LLaMA 3.3</div>
+</div>
+""", unsafe_allow_html=True)
 
-with tab_chat:
-    # (Aapka baaki chat logic yahan rahega...)
-    st.write("Chat interface ready.")
+col_main, col_side = st.columns([3, 1])
+
+with col_side:
+    st.markdown('<div class="section-label">💬 Quick Questions</div>', unsafe_allow_html=True)
+    quick_questions = [
+        ("🫀", "Signs of heart attack?"),
+        ("🩸", "Blood sugar control"),
+        ("🧠", "Anxiety relief tips"),
+        ("💊", "Drug interactions"),
+        ("🤒", "Fever and body aches"),
+        ("😴", "Better sleep tips"),
+        ("🏃", "Exercise for beginners"),
+        ("🥗", "Anti-inflammatory foods"),
+    ]
+    for icon, question in quick_questions:
+        if st.button(f"{icon}  {question}", key=f"qq_{question}"):
+            st.session_state.chat_history.append({"role": "user", "content": question})
+            with st.spinner(""):
+                reply = get_ai_response(question, st.session_state.chat_history[:-1])
+                st.session_state.chat_history.append({"role": "assistant", "content": reply})
+                st.rerun()
+
+    st.markdown('<div class="section-label">✨ Capabilities</div>', unsafe_allow_html=True)
+    for cap in ["Symptom analysis", "Drug information", "Mental health", "Nutrition advice", "Emergency guidance", "Lab results", "50+ languages"]:
+        st.markdown(f'<div class="cap-item"><div class="cap-dot"></div>{cap}</div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="section-label">🏷️ Topics</div>', unsafe_allow_html=True)
+    topics_html = ""
+    for t in ["Heart Health", "Diabetes", "Blood Pressure", "Mental Health", "Nutrition", "Sleep", "Pregnancy", "Allergies"]:
+        topics_html += f'<span style="display:inline-block;background:#f0f4f0;border:1px solid #d4edbe;color:#3b6d11;border-radius:20px;padding:3px 9px;font-size:11px;margin:2px;">{t}</span>'
+    st.markdown(f'<div style="line-height:2.2;">{topics_html}</div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="section-label">🌐 Language</div>', unsafe_allow_html=True)
+    language = st.selectbox("", ["English","Arabic","Urdu","Hindi","French","Spanish","German","Turkish","Persian","Malay"], label_visibility="collapsed")
+
+with col_main:
+    st.markdown("""
+    <div class="chat-box-header">
+        <span class="chat-box-title">💬 Conversation</span>
+        <span class="chat-box-badge">FastAPI Powered</span>
+    </div>
+    """, unsafe_allow_html=True)
+
+    chat_area = st.container(height=450, border=True)
+
+    with chat_area:
+        st.markdown('<div class="date-badge"><span>Today</span></div>', unsafe_allow_html=True)
+
+        st.markdown(f"""
+        <div class="msg-ai">
+            <div class="msg-ai-ava">🤖</div>
+            <div class="msg-ai-bubble">
+                <div class="msg-ai-text">Hi! I am <b>HealthAI Assistant</b>. I am here to help with health questions, symptom analysis, medication information and wellness advice.<br/><br/>How can I help you today?</div>
+                <div class="msg-time">{now}</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        for message in st.session_state.chat_history:
+            if message["role"] == "user":
+                st.markdown(f"""
+                <div class="msg-user">
+                    <div class="msg-user-bubble">
+                        <div class="msg-user-text">{message["content"]}</div>
+                        <div class="msg-time-user">{now}</div>
+                    </div>
+                    <div class="msg-user-ava">👤</div>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.markdown(f"""
+                <div class="msg-ai">
+                    <div class="msg-ai-ava">🤖</div>
+                    <div class="msg-ai-bubble">
+                        <div class="msg-ai-text">{message["content"]}</div>
+                        <div class="msg-time">{now}</div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+
+        # Auto scroll anchor
+        st.markdown('<div id="chat-end"></div>', unsafe_allow_html=True)
+
+    # Auto scroll JavaScript
+    st.markdown("""
+    <script>
+        function autoScroll() {
+            var iframes = window.parent.document.querySelectorAll('iframe');
+            iframes.forEach(function(iframe) {
+                try {
+                    var scrollable = iframe.contentDocument.querySelectorAll('[data-testid="stVerticalBlockBorderWrapper"]');
+                    scrollable.forEach(function(el) {
+                        el.scrollTop = el.scrollHeight;
+                    });
+                } catch(e) {}
+            });
+            var blocks = window.parent.document.querySelectorAll('[data-testid="stVerticalBlockBorderWrapper"]');
+            blocks.forEach(function(el) {
+                el.scrollTop = el.scrollHeight;
+            });
+        }
+        setTimeout(autoScroll, 200);
+        setTimeout(autoScroll, 600);
+        setTimeout(autoScroll, 1200);
+    </script>
+    """, unsafe_allow_html=True)
+
+    # Symptom selector
+    st.markdown('<div class="section-label">🩺 Select Symptoms</div>', unsafe_allow_html=True)
+    symptoms_list = [
+        ("🌡️", "Fever"), ("🤒", "Headache"), ("💔", "Chest Pain"),
+        ("😮‍💨", "Breathless"), ("🤢", "Nausea"), ("😴", "Fatigue"),
+        ("🩸", "Bleeding"), ("🦴", "Joint Pain"), ("👁️", "Blurred Vision"),
+    ]
+    selected_symptoms = []
+    sym_cols = st.columns(9)
+    for i, (icon, symptom) in enumerate(symptoms_list):
+        with sym_cols[i]:
+            st.markdown(f"""
+            <div class="symptom-card-wrap">
+                <div class="symptom-icon">{icon}</div>
+                <div class="symptom-name">{symptom}</div>
+            </div>
+            """, unsafe_allow_html=True)
+            if st.checkbox("", key=f"sym_{symptom}", label_visibility="collapsed"):
+                selected_symptoms.append(symptom)
+
+    if selected_symptoms:
+        st.markdown(f"""
+        <div style="background:#eaf3de;border:1px solid #97c459;border-radius:10px;padding:0.6rem 1rem;margin-top:0.5rem;font-size:12px;color:#27500a;">
+            <b>Selected:</b> {', '.join(selected_symptoms)}
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("🔍 Analyze These Symptoms"):
+            msg = f"I have these symptoms: {', '.join(selected_symptoms)}. What could be wrong?"
+            st.session_state.chat_history.append({"role": "user", "content": msg})
+            with st.spinner("HealthAI is analyzing..."):
+                reply = get_ai_response(msg, st.session_state.chat_history[:-1])
+                st.session_state.chat_history.append({"role": "assistant", "content": reply})
+                st.rerun()
+
+    # Chat input
+    user_input = st.chat_input("Type your health question here...")
+    if user_input:
+        st.session_state.chat_history.append({"role": "user", "content": user_input})
+        with st.spinner("HealthAI is thinking..."):
+            reply = get_ai_response(user_input, st.session_state.chat_history[:-1], language)
+            st.session_state.chat_history.append({"role": "assistant", "content": reply})
+            st.rerun()
+
+    if st.session_state.chat_history:
+        b1, b2, b3 = st.columns(3)
+        with b1:
+            if st.button("🗑️ Clear Chat"):
+                st.session_state.chat_history = []
+                st.rerun()
+        with b2:
+            chat_text = "\n\n".join([f"{'You' if m['role']=='user' else 'HealthAI'}: {m['content']}" for m in st.session_state.chat_history])
+            st.download_button("💾 Save Chat", data=chat_text, file_name="health_chat.txt", mime="text/plain")
+        with b3:
+            if st.button("🔄 New Session"):
+                st.session_state.chat_history = []
+                st.rerun()
+
+st.markdown('<div class="disclaimer">⚠️ HealthAI provides general health information only. Always consult a qualified doctor. In emergencies call 999/911/112 immediately.</div>', unsafe_allow_html=True)
