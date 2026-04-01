@@ -1,17 +1,17 @@
 <div align="center">
 
-# ⚕️ Smart Health Companion
-### AI-Powered Disease Prediction & Health Assistant
+# 🏥 ClinIQ: Smart Health Companion
+### Next-Gen AI Diagnostics & Integrated Clinical Assistant
 
 ![Python](https://img.shields.io/badge/Python-3.11-blue?style=for-the-badge&logo=python)
 ![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![Groq](https://img.shields.io/badge/Groq_LLM-00D4FF?style=for-the-badge)
 ![TensorFlow](https://img.shields.io/badge/TensorFlow-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white)
-![Scikit Learn](https://img.shields.io/badge/Scikit_Learn-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white)
-![Groq](https://img.shields.io/badge/Groq_API-00D4FF?style=for-the-badge)
 
-**A multi-model AI system for disease prediction, medical image analysis, and intelligent health guidance**
+**A professional multi-model AI suite for disease prediction, X-ray analysis, and contextual health guidance.**
 
-[Live Demo](#) · [Report Bug](#) · [Request Feature](#)
+[Live Demo](https://smart-health-companion.streamlit.app/) · [Report Bug](#) · [Request Feature](#)
 
 </div>
 
@@ -19,7 +19,7 @@
 
 ## 🌟 Overview
 
-Smart Health Companion is a final year project (FYP) that combines Machine Learning, Deep Learning, and Generative AI into a single web application. Users can predict heart disease risk, analyze chest X-rays for pneumonia, and chat with an AI health assistant — all in one futuristic glassmorphism UI.
+**ClinIQ (Smart Health Companion)** is a final year project (FYP) that bridges the gap between static medical data and conversational AI. It features a unique **Vitals Observation Deck** that feeds real-time patient context into a **Llama 3.3 (70B)** powered assistant, alongside high-precision ML models for cardiac and pulmonary diagnostics.
 
 ---
 
@@ -27,131 +27,49 @@ Smart Health Companion is a final year project (FYP) that combines Machine Learn
 
 | Feature | Description | Tech Used |
 |---|---|---|
-| 🫀 Heart Disease Prediction | Predicts heart disease risk from patient data | Random Forest, SVM |
-| 🫁 X-Ray Analysis | Detects pneumonia from chest X-ray images | CNN, ONNX |
-| 🤖 Health Chatbot | Multi-turn symptom-based health assistant | LLaMA 3.3 70B, Groq |
+| 📡 **Vitals Monitoring** | Real-time deck to track & edit BP, HR, Temp, and SpO2 | Session State, Custom CSS |
+| 🫀 **Cardiac Analytics** | Predicts heart disease risk using 15 clinical parameters | Random Forest, Scikit-Learn |
+| 🫁 **X-Ray Analysis** | Scans chest X-rays for pneumonia detection | CNN, ONNX Runtime |
+| 🤖 **Clinical Chatbot** | Context-aware assistant using live vitals for advice | Llama 3.3 70B, Groq API |
+| 📄 **Clinical Reports** | Generates professional session summaries in PDF | FPDF2, Python |
 
 ---
 
 ## 📊 Model Performance
 
-| Model | Metric | Score |
+| Model Component | Metric | Score |
 |---|---|---|
-| Random Forest | AUC-ROC | 0.92 |
-| Random Forest | Test Accuracy | ~87% |
-| SVM | Test Accuracy | ~85% |
-| CNN (X-Ray) | Train Accuracy | 95.28% |
-| CNN (X-Ray) | Test Accuracy | 79.49% |
+| **Heart Disease (RF)** | AUC-ROC | **0.92** |
+| **Heart Disease (RF)** | Test Accuracy | **~87%** |
+| **CNN (X-Ray AI)** | Training Accuracy | **95.28%** |
+| **CNN (X-Ray AI)** | Test Accuracy | **79.49%** |
 
 ---
 
 ## 🛠️ Tech Stack
 
-- **Frontend** — Streamlit with custom CSS (Glassmorphism UI)
+- **Frontend** — Streamlit (Futuristic Dark Glassmorphism UI)
+- **Intelligence Hub** — Groq Cloud API (Llama 3.3 70B Model)
+- **Backend Communication** — FastAPI & Requests
 - **Machine Learning** — Scikit-learn (Random Forest, SVM)
-- **Deep Learning** — TensorFlow/Keras (CNN), ONNX Runtime
-- **Generative AI** — Groq API (LLaMA 3.3 70B)
-- **Data Processing** — Pandas, NumPy
-- **Visualization** — Matplotlib, Seaborn
-- **Deployment** — Streamlit Cloud
+- **Deep Learning** — TensorFlow/Keras, ONNX
+- **Reporting Engine** — FPDF2 for clinical document exports
 
 ---
 
 ## 📁 Project Structure
-```
+```text
 smart-health-companion/
-├── app.py                      # Main Streamlit app (home page)
+├── app.py                      # Main Dashboard & Vitals Observation Deck
 ├── pages/
-│   ├── 1_Heart_Disease.py      # Heart disease prediction page
-│   ├── 2_Xray_Analysis.py      # X-ray pneumonia detection page
-│   └── 3_Health_Chatbot.py     # LLM health chatbot page
+│   ├── 1_Heart_Disease.py      # Cardiac prediction & risk analysis
+│   ├── 2_Xray_Analysis.py      # CNN-based pneumonia detection
+│   └── 3_Health_Chatbot.py     # AI Chatbot with context injection
 ├── models/
-│   ├── rf_model.pkl            # Trained Random Forest model
-│   ├── scaler.pkl              # Feature scaler
-│   └── xray_model.onnx         # CNN model in ONNX format
+│   ├── rf_heart_model.pkl      # Trained ML weights
+│   └── xray_model.onnx         # Optimized Deep Learning model
+├── utils/
+│   ├── pdf_generator.py        # Clinical PDF report logic
+│   └── sidebar.py              # Navigation & theme settings
 ├── requirements.txt
 └── README.md
-```
-
----
-
-## 📦 Installation
-
-### 1. Clone the repository
-```bash
-git clone https://github.com/yourusername/smart-health-companion.git
-cd smart-health-companion
-```
-
-### 2. Install dependencies
-```bash
-pip install -r requirements.txt
-```
-
-### 3. Add your Groq API key
-Create a `.streamlit/secrets.toml` file:
-```toml
-GROQ_API_KEY = "your_groq_api_key_here"
-```
-
-### 4. Run the app
-```bash
-streamlit run app.py
-```
-
----
-
-## 🗂️ Datasets Used
-
-| Dataset | Source | Size |
-|---|---|---|
-| UCI Heart Disease | Kaggle | 299 patients, 15 features |
-| Chest X-Ray Images | Kaggle (Paul Mooney) | 5,216 training images |
-
----
-
-## 🧠 How It Works
-
-### Heart Disease Prediction
-1. User inputs 15 health parameters (age, cholesterol, BP, etc.)
-2. Data is scaled using StandardScaler
-3. Random Forest model predicts disease probability
-4. Result displayed with confidence percentage
-
-### X-Ray Analysis
-1. User uploads a chest X-ray image
-2. Image resized to 150x150 and normalized
-3. CNN model (ONNX) predicts Normal vs Pneumonia
-4. Result displayed with confidence score
-
-### Health Chatbot
-1. User describes symptoms in natural language
-2. LLaMA 3.3 70B processes the query via Groq API
-3. Multi-turn conversation maintains context
-4. AI responds with possible conditions and advice
-
----
-
-## ⚠️ Disclaimer
-
-This application is built for **educational purposes only** as part of a Final Year Project. It is **not a substitute for professional medical advice**. Always consult a qualified healthcare professional for proper diagnosis and treatment.
-
----
-
-## 👨‍💻 Author
-
-**Muhammad Zayab Ansari**
-- Final Year Project — AI & Machine Learning
-- Built with ❤️ using Python & Streamlit
-
----
-
-## 📄 License
-
-This project is open source and available under the [MIT License](LICENSE).
-
----
-
-<div align="center">
-⭐ Star this repo if you found it helpful!
-</div>
