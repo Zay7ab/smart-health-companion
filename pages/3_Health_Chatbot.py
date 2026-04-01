@@ -125,4 +125,78 @@ with col_main:
         <div class="msg-ai">
             <div class="msg-ai-ava">🤖</div>
             <div class="msg-ai-bubble">
-                <div class="msg-ai-text">Hi! I am <b>HealthAI Assistant
+                <div class="msg-ai-text">Hi! I am <b>HealthAI Assistant</b>. I am here to help with health questions, symptom analysis, medication information and wellness advice.<br/><br/>How can I help you today?</div>
+                <div class="msg-time">{now}</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        for message in st.session_state.chat_history:
+            role_class = "msg-user" if message["role"] == "user" else "msg-ai"
+            bubble_class = "msg-user-bubble" if message["role"] == "user" else "msg-ai-bubble"
+            text_class = "msg-user-text" if message["role"] == "user" else "msg-ai-text"
+            time_class = "msg-time-user" if message["role"] == "user" else "msg-time"
+            avatar = "👤" if message["role"] == "user" else "🤖"
+            
+            if message["role"] == "user":
+                st.markdown(f"""
+                <div class="msg-user">
+                    <div class="msg-user-bubble">
+                        <div class="msg-user-text">{message["content"]}</div>
+                        <div class="msg-time-user">{now}</div>
+                    </div>
+                    <div class="msg-user-ava">{avatar}</div>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.markdown(f"""
+                <div class="msg-ai">
+                    <div class="msg-ai-ava">{avatar}</div>
+                    <div class="msg-ai-bubble">
+                        <div class="msg-ai-text">{message["content"]}</div>
+                        <div class="msg-time">{now}</div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+
+    # Auto scroll JavaScript
+    st.markdown("""
+    <script>
+        function autoScroll() {
+            var iframes = window.parent.document.querySelectorAll('iframe');
+            iframes.forEach(function(iframe) {
+                try {
+                    var scrollable = iframe.contentDocument.querySelectorAll('[data-testid="stVerticalBlockBorderWrapper"]');
+                    scrollable.forEach(function(el) {
+                        el.scrollTop = el.scrollHeight;
+                    });
+                } catch(e) {}
+            });
+        }
+        setTimeout(autoScroll, 500);
+    </script>
+    """, unsafe_allow_html=True)
+
+    user_input = st.chat_input("Type your health question here...")
+    if user_input:
+        st.session_state.chat_history.append({"role": "user", "content": user_input})
+        with st.spinner("HealthAI is thinking..."):
+            reply = get_ai_response(user_input, st.session_state.chat_history[:-1], language)
+            st.session_state.chat_history.append({"role": "assistant", "content": reply})
+            st.rerun()
+
+    if st.session_state.chat_history:
+        b1, b2, b3 = st.columns(3)
+        with b1:
+            if st.button("🗑️ Clear Chat"):
+                st.session_state.chat_history = []
+                st.rerun()
+        with b2:
+            chat_text = "\n\n".join([f"{'You' if m['role']=='user' else 'HealthAI'}: {m['content']}" for m in st.session_state.chat_history])
+            st.download_button("💾 Save Chat", data=chat_text, file_name="health_chat.txt", mime="text/plain")
+        with b3:
+            if st.button("🔄 New Session"):
+                st.session_state.chat_history = []
+                st.rerun()
+
+st.markdown('<div class="disclaimer">⚠️ HealthAI provides general health information only. Always consult a qualified doctor. In emergencies call 999/911/112 immediately.</div>', unsafe_allow_html=True)
