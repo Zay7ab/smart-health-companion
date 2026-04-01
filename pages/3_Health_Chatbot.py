@@ -19,7 +19,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- Load Sidebar if exists ---
+# --- Load Sidebar ---
 sys.path.append('.')
 try:
     from utils.sidebar import load_sidebar
@@ -53,17 +53,16 @@ div[data-testid="stPopover"] > button { background: transparent !important; bord
 """, unsafe_allow_html=True)
 
 # --- Initialize Session State ---
-state_keys = {
-    'bp': "120/80", 'hr': 72, 'temp': 98.6, 'ox': 98,
-    'chat_history': [], 'user_query': ""
-}
-for key, val in state_keys.items():
-    if key not in st.session_state:
-        st.session_state[key] = val
+if 'chat_history' not in st.session_state:
+    st.session_state.chat_history = []
+if 'bp' not in st.session_state: st.session_state.bp = "120/80"
+if 'hr' not in st.session_state: st.session_state.hr = 72
+if 'temp' not in st.session_state: st.session_state.temp = 98.6
+if 'ox' not in st.session_state: st.session_state.ox = 98
 
 API_URL = st.secrets.get("API_BASE_URL", "https://zay7ab-health-ai-api.hf.space")
 
-# --- Helper: FIXED PDF Generator ---
+# --- Helper: PDF Generator (The Fix) ---
 def export_pdf(history, vitals):
     pdf = FPDF()
     pdf.add_page()
@@ -85,15 +84,16 @@ def export_pdf(history, vitals):
     pdf.set_font("Helvetica", 'B', 12)
     pdf.cell(0, 10, "Clinical Interaction Log:", ln=True)
     pdf.set_font("Helvetica", '', 10)
+    
     for msg in history:
         role = "PATIENT" if msg["role"] == "user" else "AI ASSISTANT"
-        # Cleaning and encoding for safety
-        content = str(msg['content']).encode('latin-1', 'ignore').decode('latin-1')
-        txt = f"{role}: {content}"
+        # Encode to latin-1 and ignore errors to prevent PDF crash on emojis/special chars
+        clean_content = str(msg['content']).encode('latin-1', 'ignore').decode('latin-1')
+        txt = f"{role}: {clean_content}"
         pdf.multi_cell(0, 8, txt)
         pdf.ln(2)
     
-    # FIXED: Use 'S' to output as string, then encode to bytes
+    # Return as bytes
     return pdf.output(dest='S').encode('latin-1')
 
 # --- UI Header ---
@@ -107,7 +107,7 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# --- Vitals Observation Deck ---
+# --- Vitals Deck ---
 st.markdown('<div class="section-header">📡 Vitals Observation Deck <div class="section-line"></div></div>', unsafe_allow_html=True)
 v_cols = st.columns(4)
 v_meta = [
@@ -125,10 +125,10 @@ for i, meta in enumerate(v_meta):
         </div>""", unsafe_allow_html=True)
         with st.popover(f"Edit {meta['key'].upper()}"):
             if meta['key'] == 'bp':
-                st.session_state[meta['key']] = st.text_input(f"New {meta['label']}", value=st.session_state[meta['key']], key=f"input_{meta['key']}")
+                st.session_state[meta['key']] = st.text_input(f"Set {meta['label']}", value=st.session_state[meta['key']], key=f"inp_{meta['key']}")
             else:
-                st.session_state[meta['key']] = st.number_input(f"New {meta['label']}", value=float(st.session_state[meta['key']]), key=f"input_{meta['key']}")
-            if st.button(f"Update {meta['key']}", key=f"btn_{meta['key']}"): st.rerun()
+                st.session_state[meta['key']] = st.number_input(f"Set {meta['label']}", value=float(st.session_state[meta['key']]), key=f"inp_{meta['key']}")
+            if st.button("Update", key=f"btn_{meta['key']}"): st.rerun()
 
 # --- Intelligence Tabs ---
 tab_chat, tab_reports, tab_tools = st.tabs(["💬 Clinical Chat", "📄 Diagnostic Reports", "🛠️ Clinical Tools"])
@@ -136,29 +136,22 @@ tab_chat, tab_reports, tab_tools = st.tabs(["💬 Clinical Chat", "📄 Diagnost
 with tab_chat:
     chat_box = st.container()
     with chat_box:
-        st.markdown('<div class="bubble bubble-ai"><b>ClinIQ Assistant:</b> Environment ready. Vitals synced. How can I assist you?</div>', unsafe_allow_html=True)
+        st.markdown('<div class="bubble bubble-ai"><b>Assistant:</b> Ready. How can I help?</div>', unsafe_allow_html=True)
         for m in st.session_state.chat_history:
             cls = "bubble-user" if m["role"] == "user" else "bubble-ai"
             st.markdown(f'<div class="bubble {cls}">{m["content"]}</div>', unsafe_allow_html=True)
 
-    if mic_recorder:
-        st.write("🎤 Voice Triage (Beta):")
-        mic_recorder(start_prompt="Record Symptoms", stop_prompt="Stop Recording", key='recorder')
-
     query = st.chat_input("Describe symptoms...")
     if query:
         st.session_state.chat_history.append({"role": "user", "content": query})
-        with st.spinner("🤖 Analyzing..."):
-            context = f"[Context: BP {st.session_state.bp}, HR {st.session_state.hr}] "
+        with st.spinner("Analyzing..."):
             try:
                 res = requests.post(f"{API_URL}/chat", 
-                                    json={"message": context + query, 
-                                          "history": st.session_state.chat_history[:-1], 
-                                          "api_key": st.secrets.get("GROQ_API_KEY", "")}, 
-                                    timeout=20)
-                reply = res.json().get("reply", "Intelligence calibrating...")
+                                    json={"message": query, "history": st.session_state.chat_history[:-1]}, 
+                                    timeout=15)
+                reply = res.json().get("reply", "Error retrieving AI response.")
             except:
-                reply = "⏱️ API Timeout."
+                reply = "API Timeout. Please try again."
             st.session_state.chat_history.append({"role": "assistant", "content": reply})
             st.rerun()
 
@@ -172,28 +165,27 @@ with tab_tools:
     with c1:
         st.link_button("📍 Find Nearest Hospital", "https://www.google.com/maps/search/hospital")
     with c2:
-        # Check if history exists to avoid empty PDFs
-        if st.session_state.chat_history:
+        # THE FIX: Only show download button if chat history exists
+        if len(st.session_state.chat_history) > 0:
             try:
-                pdf_bytes = export_pdf(st.session_state.chat_history, st.session_state)
+                report_bytes = export_pdf(st.session_state.chat_history, st.session_state)
                 st.download_button(
                     label="💾 Download PDF Summary",
-                    data=pdf_bytes,
+                    data=report_bytes,
                     file_name="ClinIQ_Report.pdf",
                     mime="application/pdf",
-                    key="download_pdf_btn"
+                    key="dl_btn_final"
                 )
             except Exception as e:
-                st.error(f"Error generating PDF: {e}")
+                st.error("Error generating PDF. Ensure no special characters are used.")
         else:
             st.info("Start a chat to generate a report summary.")
 
 # Sidebar
 with st.sidebar:
-    st.markdown("### 📊 Session Status")
-    st.write(f"Vitals Updated: {datetime.datetime.now().strftime('%H:%M')}")
-    if st.button("🗑️ Reset All Sessions"):
+    st.markdown("### 📊 Status")
+    if st.button("🗑️ Clear Chat"):
         st.session_state.chat_history = []
         st.rerun()
 
-st.markdown('<div class="disclaimer">⚠️ <b>Clinical Disclaimer:</b> ClinIQ is an AI tool for informational purposes.</div>', unsafe_allow_html=True)
+st.markdown('<div class="disclaimer">⚠️ <b>Disclaimer:</b> For informational purposes only.</div>', unsafe_allow_html=True)
